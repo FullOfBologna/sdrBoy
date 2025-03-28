@@ -3,6 +3,9 @@ import numpy as np
 Byte = np.uint8
 Word = np.uint16
 
+# class SingletonBase:
+#TODO : Establish a Singleton base class
+
 class Flag:
     _instance = None  # Class variable to store the single instance
     _initialized = False # Flag to ensure __init__ runs only once

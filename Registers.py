@@ -7,18 +7,6 @@ Word = np.uint16
 class Flag(SingletonBase):
     _initialized = False # Flag to ensure __init__ runs only once
 
-    # def __new__(cls):
-    #     """
-    #     Controls the instance creation process.
-    #     """
-    #     if cls._instance is None:
-    #         print("Creating Flag Instance...")
-    #         # Call the superclass's __new__ to actually create the object
-    #         cls._instance = super().__new__(cls)
-    #     else:
-    #         print("Flag already exists, returning it.")
-    #     return cls._instance
-
     def __init__(self):
 
         # Initialization Guard
@@ -34,20 +22,9 @@ class Flag(SingletonBase):
         self._c = 0
         self._flag = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
         self._initialized = True
-
-    # def write(self,byte):
-    #     self.c = (byte & 0x10) >>  4
-    #     self.h = (byte & 0x20) >>  5
-    #     self.n = (byte & 0x40) >>  6
-    #     self.z = (byte & 0x80) >>  7
     
     def flagReset(self):
         self._flag = 0x00
-
-    # def read(self):
-    #     outByte = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
-    #     print(f"{outByte}")
-    #     return outByte
 
     @property
     def flag(self):

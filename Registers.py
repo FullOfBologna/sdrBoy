@@ -1,47 +1,68 @@
 import numpy as np
+from SingletonBase import SingletonBase
 
 Byte = np.uint8
 Word = np.uint16
 
-# class SingletonBase:
-#TODO : Establish a Singleton base class
-
-class Flag:
-    _instance = None  # Class variable to store the single instance
+class Flag(SingletonBase):
     _initialized = False # Flag to ensure __init__ runs only once
 
-    def __new__(cls):
-        """
-        Controls the instance creation process.
-        """
-        if cls._instance is None:
-            print("Creating Flag Instance...")
-            # Call the superclass's __new__ to actually create the object
-            cls._instance = super().__new__(cls)
-        else:
-            print("Flag already exists, returning it.")
-        return cls._instance
+    # def __new__(cls):
+    #     """
+    #     Controls the instance creation process.
+    #     """
+    #     if cls._instance is None:
+    #         print("Creating Flag Instance...")
+    #         # Call the superclass's __new__ to actually create the object
+    #         cls._instance = super().__new__(cls)
+    #     else:
+    #         print("Flag already exists, returning it.")
+    #     return cls._instance
 
     def __init__(self):
+
+        # Initialization Guard
+        if hasattr(self, '_initialized') and self._initialized:
+            print(f"... Skipping Flag __init__ due to existing initialization {id(self)}")
+            return
+
+        print(f"Iniitalizing Flag instance {id(self)}")
+
         self._z = 0
         self._n = 0
         self._h = 0
         self._c = 0
+        self._flag = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
+        self._initialized = True
 
-    def write(self,byte):
+    # def write(self,byte):
+    #     self.c = (byte & 0x10) >>  4
+    #     self.h = (byte & 0x20) >>  5
+    #     self.n = (byte & 0x40) >>  6
+    #     self.z = (byte & 0x80) >>  7
+    
+    def flagReset(self):
+        self._flag = 0x00
+
+    # def read(self):
+    #     outByte = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
+    #     print(f"{outByte}")
+    #     return outByte
+
+    @property
+    def flag(self):
+        # self._flag = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
+        # print(f"{self.flag}")
+        return self._flag
+
+    @flag.setter
+    def flag(self, byte):
         self.c = (byte & 0x10) >>  4
         self.h = (byte & 0x20) >>  5
         self.n = (byte & 0x40) >>  6
         self.z = (byte & 0x80) >>  7
-    
-    def reset(self):
-        self.write(0x00)
+        self._flag = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
 
-    def read(self):
-        outByte = Byte(self.A << 7 | self.HL << 6 | self.L << 5 | self.H << 4)
-        print(f"{outByte}")
-        return outByte
-    
     @property    
     def c(self):
         return self._c
@@ -78,32 +99,22 @@ class Flag:
             raise ValueError(f"bit = {bit}: Bit must be [0|1]")
         self._c = bit
 
-class RegByte:
-    _instance = None  # Class variable to store the single instance
+class RegByte(SingletonBase):
     _initialized = False # Flag to ensure __init__ runs only once
-
-    def __new__(cls):
-        """
-        Controls the instance creation process.
-        """
-        if cls._instance is None:
-            print("Creating RegByte Instance...")
-            # Call the superclass's __new__ to actually create the object
-            cls._instance = super().__new__(cls)
-        else:
-            print("RegByte already exists, returning it.")
-        return cls._instance
 
     def __init__(self):
         """
         Initializes the instance state *only the first time*.
         """
         # Check if this specific instance has already been initialized
-        if self._initialized:
-            print("Initialization skipped (already done).")
+
+        # Initialization Guard
+        if hasattr(self, '_initialized') and self._initialized:
+            print(f"... Skipping Flag __init__ due to existing initialization {id(self)}")
             return
 
-        print(f"Initializing RegByte (first time)...")
+
+        print(f"Iniitalizing RegByte instance {id(self)}")
 
         self._initialized = True
         self._B = Byte(0)
@@ -167,32 +178,30 @@ class RegByte:
     def L(self, byte : Byte):
         self._L = byte
 
-class RegWord:
+class RegWord(SingletonBase):
 
-    # Main Question with this class, do the words here need to track their respective bytes real time? 
-    # Seemingly would need real time, pointer like behavior, with the 
-    _instance = None  # Class variable to store the single instance
+    # Main Question with this class, do the words here need to track their respective bytes real time?  YES
+    # Seemingly would need real time, pointer like behavior. 
+    # TODO To satisfy this, implement the subject/observer data pattern of RegByte instance
+
     _initialized = False # Flag to ensure __init__ runs only once
 
-    def __new__(cls):
-        """
-        Controls the instance creation process.
-        """
-        if cls._instance is None:
-            print("Creating RegByte Instance...")
-            # Call the superclass's __new__ to actually create the object
-            cls._instance = super().__new__(cls)
-        else:
-            print("RegByte already exists, returning it.")
-        return cls._instance
-
     def __init__(self, byte : RegByte, flag : Flag):
-        self._AF = (byte.A << 8) | flag
-        self._BC = (byte.B << 8) | byte.C
-        self._DE = (byte.D << 8) | byte.E
-        self._HL = (byte.H << 8) | byte.L
+        # Initialization Guard
+        if hasattr(self, '_initialized') and self._initialized:
+            print(f"... Skipping RegWord __init__ due to existing initialization {id(self)}")
+            return
+
+        print(f"Iniitalizing Flag instance {id(self)}")
+
+        self.byte = byte
+        self._AF = (self.byte.A << 8) | flag.flag # Need to explicitly tell python to access the flags property
+        self._BC = (self.byte.B << 8) | self.byte.C
+        self._DE = (self.byte.D << 8) | self.byte.E
+        self._HL = (self.byte.H << 8) | self.byte.L
         self._SP = Word(0)
         self._PC = Word(0)
+        self._initialized = True
     
     #============ Stack Pointer and Program Counter Properties===#
 
@@ -226,55 +235,48 @@ class RegWord:
 
 
     #============ 16 bit Words of Core Registers=================#
-    ## TODO : Implement logic within the getter to decompose the high and low bytes, or leave that to the high level user. TBD
-
+    
+    # Getter will update the value when it is called, from referencing the underlying core register
     @property    
     def AF(self):
+        self._AF = (self.byte.A << 8) | self.flag
         return self._AF
     
     @AF.setter
     def AF(self, word : Word):
-        self._AF = word
-
-    @AF.setter
-    def AF(self, aByte : Byte, flag : Flag):
-        self._AF = (aByte << 8) | flag
+        self.byte.A = (word & 0xFF00) >> 8
+        self.flag = (word & 0xFF)
+        self._AF = (self.byte.A << 8) | self.flag
 
     @property    
     def BC(self):
+        self._BC = (self.byte.B << 8) | self.byte.C
         return self._BC
     
     @BC.setter
     def BC(self, word : Word):
-        self._BC = word
-
-    @BC.setter
-    def BC(self, bByte : Byte, cByte : Byte):
-        self._BC = (bByte << 8) | cByte
-
+        self.byte.B = (word & 0xFF00) >> 8
+        self.byte.C = (word & 0xFF)
+        self._BC = (self.byte.B  << 8) | self.byte.C
+    
     @property    
     def DE(self):
+        self._DE = (self.byte.D << 8) | self.byte.E
         return self._DE
     
     @DE.setter
     def DE(self, word : Word):
-        self._DE = word
-
-    @DE.setter
-    def DE(self, dByte : Byte, eByte : Byte):
-        self._DE = (dByte << 8) | eByte
+        self.byte.D = (word & 0xFF00) >> 8
+        self.byte.E = (word & 0xFF)
+        self._DE = (self.byte.D  << 8) | self.byte.E
 
     @property    
     def HL(self):
+        self._HL = (self.byte.H << 8) | self.byte.L
         return self._HL
     
     @HL.setter
     def HL(self, word : Word):
-        self._HL = word
-
-
-    @HL.setter
-    def HL(self, hByte : Byte, lByte : Byte):
-        self._HL = (hByte << 8) | lByte
-
-    
+        self.byte.H = (word & 0xFF00) >> 8
+        self.byte.L = (word & 0xFF)
+        self._HL = (self.byte.H  << 8) | self.byte.L

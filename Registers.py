@@ -4,6 +4,9 @@ from SingletonBase import SingletonBase
 Byte = np.uint8
 Word = np.uint16
 
+INIT_STACK_POINTER = 0xFFFE
+INIT_PROG_COUNTER = 0x0100 # Post Boot ROM program counter. Entry point for the game cartridge
+
 class Flag(SingletonBase):
     _initialized = False # Flag to ensure __init__ runs only once
 
@@ -16,10 +19,11 @@ class Flag(SingletonBase):
 
         print(f"Iniitalizing Flag instance {id(self)}")
 
-        self._z = 0
+        # Initializing for DMG post bootstrap ROM. These values may differ per version of gameboy and game boy color
+        self._z = 1
         self._n = 0
-        self._h = 0
-        self._c = 0
+        self._h = 1
+        self._c = 1
         self._flag = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
         self._initialized = True
     
@@ -92,16 +96,16 @@ class RegByte(SingletonBase):
 
 
         print(f"Iniitalizing RegByte instance {id(self)}")
-
+        print(f"Initializing to magical post boot ROM values.")
         self._initialized = True
-        self._B = Byte(0)
-        self._C = Byte(0)
-        self._D = Byte(0)
-        self._E = Byte(0)
-        self._H = Byte(0)
-        self._L = Byte(0)
+        self._B = Byte(0x00)
+        self._C = Byte(0x13)
+        self._D = Byte(0x00)
+        self._E = Byte(0xD8)
+        self._H = Byte(0x01)
+        self._L = Byte(0x4D)
         self._HL = Word(self.H << 8 | self.L)
-        self._A = Byte(0)
+        self._A = Byte(1)
     
     @property    
     def A(self):
@@ -176,8 +180,8 @@ class RegWord(SingletonBase):
         self._BC = (self.byte.B << 8) | self.byte.C
         self._DE = (self.byte.D << 8) | self.byte.E
         self._HL = (self.byte.H << 8) | self.byte.L
-        self._SP = Word(0)
-        self._PC = Word(0)
+        self._SP = Word(INIT_STACK_POINTER)
+        self._PC = Word(INIT_PROG_COUNTER)
         self._initialized = True
     
     #============ Stack Pointer and Program Counter Properties===#

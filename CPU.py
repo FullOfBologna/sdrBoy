@@ -351,39 +351,37 @@ class CPU(SingletonBase):
         register = (register + 1) & 0xFFFF
 
     def _inc_bc(self, operandAddr):
-        self._inc_r16(self.CoreWords.BC,flags)
+        self._inc_r16(self.CoreWords.BC)
     def _inc_de(self, operandAddr):
-        self._inc_r16(self.CoreWords.DE,flags)
+        self._inc_r16(self.CoreWords.DE)
     def _inc_hl(self, operandAddr):
-        self._inc_r16(self.CoreWords.HL,flags)
+        self._inc_r16(self.CoreWords.HL)
     def _inc_sp(self, operandAddr):
-        self._inc_r16(self.CoreWords.SP,flags)
+        self._inc_r16(self.CoreWords.SP)
         
     # Increment 8 bit register by 1
     def _inc_reg8(self,register):
         original = register
         register = (register + 1) & 0xFF
 
-        flagList = list(flags)
-
         self.Flags.z = 1 if register == 0 else 0
         self.Flags.n = 0
         self.Flags.h = 1 if (original & 0x0F) == 0xF else 0
         
     def _inc_a(self,operandAddr):
-        self._inc_reg8(self.CoreReg.A,flags)
+        self._inc_reg8(self.CoreReg.A)
     def _inc_b(self,operandAddr):
-        self._inc_reg8(self.CoreReg.B,flags)
+        self._inc_reg8(self.CoreReg.B)
     def _inc_c(self,operandAddr):
-        self._inc_reg8(self.CoreReg.C,flags)
+        self._inc_reg8(self.CoreReg.C)
     def _inc_d(self,operandAddr):
-        self._inc_reg8(self.CoreReg.D,flags)
+        self._inc_reg8(self.CoreReg.D)
     def _inc_e(self,operandAddr):
-        self._inc_reg8(self.CoreReg.E,flags)
+        self._inc_reg8(self.CoreReg.E)
     def _inc_l(self,operandAddr):
-        self._inc_reg8(self.CoreReg.L,flags)
+        self._inc_reg8(self.CoreReg.L)
     def _inc_h(self,operandAddr):
-        self._inc_reg8(self.CoreReg.H,flags)
+        self._inc_reg8(self.CoreReg.H)
 
     # Decrement 8 bit register by 1
     def _dec_reg8(self,register):
@@ -395,19 +393,19 @@ class CPU(SingletonBase):
         self.Flags.h = 0 if (register & 0x0f) != 0 else 1  # lower nibble of 0 requires a borrow from upper nibble
 
     def _dec_a(self,operandAddr):
-        self._dec_reg8(self.CoreReg.A,flags)
+        self._dec_reg8(self.CoreReg.A)
     def _dec_b(self,operandAddr):
-        self._dec_reg8(self.CoreReg.B,flags)
+        self._dec_reg8(self.CoreReg.B)
     def _dec_c(self,operandAddr):
-        self._dec_reg8(self.CoreReg.C,flags)
+        self._dec_reg8(self.CoreReg.C)
     def _dec_d(self,operandAddr):
-        self._dec_reg8(self.CoreReg.D,flags)
+        self._dec_reg8(self.CoreReg.D)
     def _dec_e(self,operandAddr):
-        self._dec_reg8(self.CoreReg.E,flags)
+        self._dec_reg8(self.CoreReg.E)
     def _dec_l(self,operandAddr):
-        self._dec_reg8(self.CoreReg.L,flags)
+        self._dec_reg8(self.CoreReg.L)
     def _dec_h(self,operandAddr):
-        self._dec_reg8(self.CoreReg.H,flags)
+        self._dec_reg8(self.CoreReg.H)
 
 
 

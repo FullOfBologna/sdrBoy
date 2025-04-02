@@ -87,7 +87,6 @@ class CPU(SingletonBase):
             0x1D: (self._dec_e,         1,[ 4],       "Z1H-"),
             0x25: (self._dec_h,         1,[ 4],       "Z1H-"),
             0x2D: (self._dec_l,         1,[ 4],       "Z1H-"),
-            0x02: (self._ld_mbc_a,      1,[ 8],       "----"),
             0x06: (self._ld_b_d8,       2,[ 8],       "----"),
             0x0E: (self._ld_c_d8,       2,[ 8],       "----"),
             0x16: (self._ld_d_d8,       2,[ 8],       "----"),
@@ -100,30 +99,31 @@ class CPU(SingletonBase):
             0x19: (self._add_hl_de,     1,[ 8],       "-0HC"),
             0x29: (self._add_hl_hl,     1,[ 8],       "----"),
             0x39: (self._add_hl_sp,     1,[ 8],       "-0HC"),
-            0x36: (self._ld_hl_d8,      2,[ 12],      "----"),
+            0x36: (self._ld_mhl_d8,     2,[ 12],      "----"),
             0x07: (self._rlca,          1,[ 4],       "000C"),
             0x0F: (self._rrca,          1,[ 4],       "000C"),
+            0x17: (self._rla,           1,[ 4],       "000C"),
+            0x1F: (self._rra,           1,[ 4],       "000C"),
+            0x02: (self._ld_mbc_a,      1,[ 8],       "----"),
+            0x12: (self._ld_mde_a,       1,[ 8],       "----"),
+            0x22: (self._ld_mhlp_a,      1,[ 8],       "----"),
+            0x32: (self._ld_mhlm_a,      1,[ 8],       "----"),
             0x08: (self._ld_a16_sp,     3,[20],       "----"),
             0x0A: (self._ld_a_bc,       1,[ 8],       "----"),
-            0x10: (self._stop_0,        2,[ 4],       "----"),
-            0x12: (self._ld_de_a,       1,[ 8],       "----"),
-            0x17: (self._rla,           1,[ 4],       "000C"),
-            0x18: (self._jr_r8,         2,[12],       "----"),
             0x1A: (self._ld_a_de,       1,[ 8],       "----"),
-            0x1F: (self._rra,           1,[ 4],       "000C"),
-            0x20: (self._jr_nz_r8,      2,[12,8],   "----"),
-            0x22: (self._ld_hlp_a,      1,[ 8],       "----"),
-            0x27: (self._daa,           1,[ 4],       "Z-0C"),
-            0x28: (self._jr_z_r8,       1, [12,8],  "----"),
             0x2A: (self._ld_a_hlp,      1,[ 8],       "----"),
-            0x2F: (self._cpl,           1,[ 4],       "-11-"),
-            0x30: (self._jr_nc_r8,      2, [12,8],  "----"),
-            0x32: (self._ld_hlm_a,      1,[ 8],       "----"),
-            0x37: (self._scf,           1,[ 4],       "-001"),
-            0x38: (self._jr_c_r8,       2, [12,8],  "----"),
             0x3A: (self._ld_a_hlm,      1,[ 8],       "----"),
-            0x3E: (self._ld_a_d8,       2,[ 8],       "----"),
+            0x10: (self._stop_0,        2,[ 4],       "----"),
+            0x18: (self._jr_r8,         2,[12],       "----"),
+            0x20: (self._jr_nz_r8,      2,[12,8],   "----"),
+            0x27: (self._daa,           1,[ 4],       "Z-0C"),
+            0x37: (self._scf,           1,[ 4],       "-001"),
+            0x2F: (self._cpl,           1,[ 4],       "-11-"),
             0x3F: (self._ccf,           1,[ 4],       "-00C"),
+            0x28: (self._jr_z_r8,       1, [12,8],  "----"),
+            0x30: (self._jr_nc_r8,      2, [12,8],  "----"),
+            0x38: (self._jr_c_r8,       2, [12,8],  "----"),
+            0x3E: (self._ld_a_d8,       2,[ 8],       "----"),
             0x40: (self._ld_b_b,        1,[ 4],       "----"),
             0x41: (self._ld_b_c,        1,[ 4],       "----"),
             0x42: (self._ld_b_d,        1,[ 4],       "----"),
@@ -390,7 +390,7 @@ class CPU(SingletonBase):
 
         self.Flags.n = 1
         self.Flags.z = 1 if register == 0 else 0
-        self.Flags.h = 0 if (register & 0x0f) != 0 else 1  # lower nibble of 0 requires a borrow from upper nibble
+        self.Flags.h = 0 if (original & 0x0f) != 0 else 1  # lower nibble of 0 requires a borrow from upper nibble
 
     def _dec_a(self,operandAddr):
         self._dec_reg8(self.CoreReg.A)
@@ -407,17 +407,141 @@ class CPU(SingletonBase):
     def _dec_h(self,operandAddr):
         self._dec_reg8(self.CoreReg.H)
 
+    def _dec_r16(self,register):
+        original = register
+        register = (register - 1) & 0xFFFF
+
+    def _dec_bc(self, operandAddr):
+        self._dec_r16(self.CoreWords.BC)
+    def _dec_de(self, operandAddr):
+        self._dec_r16(self.CoreWords.DE)
+    def _dec_hl(self, operandAddr):
+        self._dec_r16(self.CoreWords.HL)
+    def _dec_sp(self, operandAddr):
+        self._dec_r16(self.CoreWords.SP)
+
+    def _ld_r8_d8(self, operandAddr):
+        # Read Operand Data and return
+        d8 = self.Memory.readByte(operandAddr)
+        return d8
+
+    def _ld_b_d8(self,operandAddr):
+        self.CoreReg.B = self._ld_r8_d8(operandAddr)
+    def _ld_c_d8(self,operandAddr):
+        self.CoreReg.C = self._ld_r8_d8(operandAddr)
+    def _ld_d_d8(self,operandAddr):
+        self.CoreReg.D = self._ld_r8_d8(operandAddr)
+    def _ld_e_d8(self,operandAddr):
+        self.CoreReg.E = self._ld_r8_d8(operandAddr)
+    def _ld_l_d8(self,operandAddr):
+        self.CoreReg.L = self._ld_r8_d8(operandAddr)
+    def _ld_h_d8(self,operandAddr):
+        self.CoreReg.H = self._ld_r8_d8(operandAddr)
+
+    def _inc_mhl(self,operandAddr):
+        # Increment Value stored in HL Location
+        original = self.Memory.readByte(self.CoreWords.HL)
+        result = original + 1
+
+        self.Memory.writeByte(result,self.CoreWords.HL)
 
 
-                
+        self.Flags.z == 1 if result == 0x00 else 0
+        self.Flags.n == 0
+        self.Flags.h == 1 if (original & 0xF) == 0xF else 0 # lower nibble of 0 requires a borrow from upper nibble
+
+    def _dec_mhl(self,operandAddr):
+        # Increment Value stored in HL Location
+        original = self.Memory.readByte(self.CoreWords.HL)
+        result = original - 1
+
+        self.Memory.writeByte(result,self.CoreWords.HL)
+
+        self.Flags.z == 1 if result == 0x00 else 0
+        self.Flags.n == 1
+        self.Flags.h == 1 if (original & 0xF) != 0x0 else 0
+
+    # Adds r16 register to the value stored in hl
+    def _add_hl_r16(self, register):
+        original = self.CoreWords.HL 
+        self.CoreWords.HL = (original + register) & 0xFFFF
+
+        halfCarryCalc = (original & 0xFFF) + (register + 0xFFF)
+        fullCarryCalc = (original) + register
+
+        self.Flags.n = 0
+        self.Flags.h = 1 if (halfCarryCalc > 0xFFF) else 0
+        self.Flags.c = 1 if (fullCarryCalc > 0xFFFF) else 0
+
+    def _add_hl_bc(self,operandAddr):
+        self._add_hl_r16(self.CoreWords.BC)
+    def _add_hl_de(self,operandAddr):
+        self._add_hl_r16(self.CoreWords.DE)
+    def _add_hl_hl(self,operandAddr):
+        self._add_hl_r16(self.CoreWords.HL)
+    def _add_hl_sp(self,operandAddr):
+        self._add_hl_r16(self.CoreWords.SP)
+
+    def _ld_mhl_d8(self,operandAddr):
+        d8 = self.Memory.readByte(operandAddr)
+        self.Memory.writeByte(d8, self.CoreWords.HL)
+
+    # Rotates Accumulator Register to the left by 1 and sets bit 7 to bit 0
+    def _rlca(self,operandAddr):
+        original = self.CoreReg.A
+
+        bit7 = (original & 0x80) >> 7
+        self.CoreReg.A = ((self.CoreReg.A << 1) & 0xFE) | bit7
+
+        self.Flags.z = 0
+        self.Flags.h = 0
+        self.Flags.n = 0
+        self.Flags.c = bit7
+
+        # Rotates Accumulator Register to the right by 1 and sets bit 0 to bit 7
+    def _rrca(self,operandAddr):
+        original = self.CoreReg.A
+
+        bit0 = (original & 0x01)
+        self.CoreReg.A = ((self.CoreReg.A >> 1) & 0x7F) | (bit0 << 7)
+
+        self.Flags.z = 0
+        self.Flags.h = 0
+        self.Flags.n = 0
+        self.Flags.c = bit0
 
 
+    # Rotates Accumulator to the left. Setting bit0 of the accumulator to the original Carry Flag value,
+    # and setting the new Carry Flag value to bit 7
+    # C Flag <-- [ b7 <-- b6 <-- ... <-- b1 <-- b0 <-- C Flag ]
+    #        Accumulator (Register A)
 
+    def _rla(self,operandAddr):
+        originalCarry = self.Flags.c 
+        orignal = self.CoreReg.A
 
+        bit7 = (orignal & 0x08) >> 7
+        self.CoreReg.A = self.CoreReg.A << 1 | originalCarry # set bit 0 to originalCarry Value
 
-    # Things CPU Needs
+        self.Flags.z = 0
+        self.Flags.h = 0
+        self.Flags.n = 0
+        self.Flags.c = bit7
 
-    # OpCode
-    # Read
-    # Write
-    # Clock Cycles
+    # Rotates Accumulator to the right. Setting bit7 of the accumulator to the original Carry Flag value,
+    # and setting the new Carry Flag value to bit 0
+    # C Flag <-- [ b7 <-- b6 <-- ... <-- b1 <-- b0 <-- C Flag ]
+    #        Accumulator (Register A)
+
+    def _rra(self,operandAddr):
+        originalCarry = self.Flags.c 
+        orignal = self.CoreReg.A
+
+        bit0 = (orignal & 0x1)
+        self.CoreReg.A = self.CoreReg.A >> 1 | (originalCarry << 7) # set bit 7 to originalCarry Value
+
+        self.Flags.z = 0
+        self.Flags.h = 0
+        self.Flags.n = 0
+        self.Flags.c = bit0
+    

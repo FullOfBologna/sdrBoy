@@ -10,9 +10,9 @@ As this grows I will likely become more open to contributions. Initially this is
 
 ## Roadmap 
 1. [ ] Implement Gameboy emulator & Screen Rendering Engine from Scratch
-2. [ ] Run a comprehensive Test ROM
-3. [ ] Modify the Test Rom to understand Assembly development
-4. [ ] Begin basic development of ROM with simulated FFT
+2. [ ] Write debugger tools in emulator gui
+3. [ ] Run a comprehensive Test ROM
+4. [ ] Begin development of SDR ROM with simulated FFT data
 5. [ ] Start PCB Layout of SDR using RTL-SDR as inspiration, and modifying layout into game boy cartridge PCB
 6. [ ] Figure out how to handle the processing of the digitized data from the sdr, and how to pipe the data into the game boy for rendering. 
    

@@ -1,9 +1,8 @@
-import SingletonBase
+from SingletonBase import *
 import numpy as np
 from Registers import Byte
 from Registers import Word
 
-MemBank = np.array
 
 GAMEBOY_MEMORY_SIZE = 0xFFFF
 

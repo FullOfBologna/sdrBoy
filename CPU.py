@@ -1,6 +1,6 @@
-import SingletonBase
-from Registers import *
-from Memory import *
+from SingletonBase import *
+import Registers
+import Memory
 
 class CPU(SingletonBase):
 
@@ -117,7 +117,7 @@ class CPU(SingletonBase):
             0x18: (self._jr_r8,         2,[12],       "----"),
             0x20: (self._jr_nz_r8,      2,[12,8],     "----"),
             0x30: (self._jr_nc_r8,      2,[12,8],     "----"),
-            0x28: (self._jr_z_r8,       1,[12,8],     "----"),
+            0x28: (self._jr_z_r8,       2,[12,8],     "----"),
             0x38: (self._jr_c_r8,       2,[12,8],     "----"),
             0x27: (self._daa,           1,[ 4],       "Z-0C"),
             0x37: (self._scf,           1,[ 4],       "-001"),
@@ -342,16 +342,16 @@ class CPU(SingletonBase):
 
     # Increment 16 bit register by 1
     def _inc_r16(self,register):
-        register = (register + 1) & 0xFFFF
+        return (register + 1) & 0xFFFF
 
     def _inc_bc(self, operandAddr):
-        self._inc_r16(self.CoreWords.BC)
+        self.CoreWords.BC = self._inc_r16(self.CoreWords.BC)
     def _inc_de(self, operandAddr):
-        self._inc_r16(self.CoreWords.DE)
+        self.CoreWords.DE = self._inc_r16(self.CoreWords.DE)
     def _inc_hl(self, operandAddr):
-        self._inc_r16(self.CoreWords.HL)
+        self.CoreWords.HL = self._inc_r16(self.CoreWords.HL)
     def _inc_sp(self, operandAddr):
-        self._inc_r16(self.CoreWords.SP)
+        self.CoreWords.SP = self._inc_r16(self.CoreWords.SP)
         
     # Increment 8 bit register by 1
     def _inc_reg8(self,register):
@@ -361,15 +361,17 @@ class CPU(SingletonBase):
         self.Flags.z = 1 if register == 0 else 0
         self.Flags.n = 0
         self.Flags.h = 1 if (original & 0x0F) == 0xF else 0
+
+        return register
         
     def _inc_a(self,operandAddr):
-        self._inc_reg8(self.CoreReg.A)
+        self.CoreReg.A = self._inc_reg8(self.CoreReg.A)
     def _inc_b(self,operandAddr):
-        self._inc_reg8(self.CoreReg.B)
+        self.CoreReg.B = self._inc_reg8(self.CoreReg.B)
     def _inc_c(self,operandAddr):
-        self._inc_reg8(self.CoreReg.C)
+        self.CoreReg.C = self._inc_reg8(self.CoreReg.C)
     def _inc_d(self,operandAddr):
-        self._inc_reg8(self.CoreReg.D)
+        self.CoreReg.D = self._inc_reg8(self.CoreReg.D)
     def _inc_e(self,operandAddr):
         self._inc_reg8(self.CoreReg.E)
     def _inc_l(self,operandAddr):
@@ -385,6 +387,7 @@ class CPU(SingletonBase):
         self.Flags.n = 1
         self.Flags.z = 1 if register == 0 else 0
         self.Flags.h = 0 if (original & 0x0f) != 0 else 1  # lower nibble of 0 requires a borrow from upper nibble
+
 
     def _dec_a(self,operandAddr):
         self._dec_reg8(self.CoreReg.A)
@@ -402,17 +405,16 @@ class CPU(SingletonBase):
         self._dec_reg8(self.CoreReg.H)
 
     def _dec_r16(self,register):
-        original = register
-        register = (register - 1) & 0xFFFF
+        return (register - 1) & 0xFFFF
 
     def _dec_bc(self, operandAddr):
-        self._dec_r16(self.CoreWords.BC)
+        self.CoreWords.BC = self._dec_r16(self.CoreWords.BC)
     def _dec_de(self, operandAddr):
-        self._dec_r16(self.CoreWords.DE)
+        self.CoreWords.DE = self._dec_r16(self.CoreWords.DE)
     def _dec_hl(self, operandAddr):
-        self._dec_r16(self.CoreWords.HL)
+        self.CoreWords.HL = self._dec_r16(self.CoreWords.HL)
     def _dec_sp(self, operandAddr):
-        self._dec_r16(self.CoreWords.SP)
+        self.CoreWords.SP = self._dec_r16(self.CoreWords.SP)
 
     def _ld_r8_d8(self, operandAddr):
         # Read Operand Data and return

@@ -108,21 +108,21 @@ class CPU(SingletonBase):
             0x12: (self._ld_mde_a,      1,[ 8],       "----"),
             0x22: (self._ld_mhlp_a,     1,[ 8],       "----"),
             0x32: (self._ld_mhlm_a,     1,[ 8],       "----"),
-            0x08: (self._ld_a16_sp,     3,[20],       "----"),
-            0x0A: (self._ld_a_bc,       1,[ 8],       "----"),
-            0x1A: (self._ld_a_de,       1,[ 8],       "----"),
-            0x2A: (self._ld_a_hlp,      1,[ 8],       "----"),
-            0x3A: (self._ld_a_hlm,      1,[ 8],       "----"),
+            0x08: (self._ld_m16_sp,     3,[20],       "----"),
+            0x0A: (self._ld_a_mbc,      1,[ 8],       "----"),
+            0x1A: (self._ld_a_mde,      1,[ 8],       "----"),
+            0x2A: (self._ld_a_mhlp,     1,[ 8],       "----"),
+            0x3A: (self._ld_a_mhlm,     1,[ 8],       "----"),
             0x10: (self._stop_0,        2,[ 4],       "----"),
             0x18: (self._jr_r8,         2,[12],       "----"),
             0x20: (self._jr_nz_r8,      2,[12,8],     "----"),
+            0x30: (self._jr_nc_r8,      2,[12,8],     "----"),
+            0x28: (self._jr_z_r8,       1,[12,8],     "----"),
+            0x38: (self._jr_c_r8,       2,[12,8],     "----"),
             0x27: (self._daa,           1,[ 4],       "Z-0C"),
             0x37: (self._scf,           1,[ 4],       "-001"),
             0x2F: (self._cpl,           1,[ 4],       "-11-"),
             0x3F: (self._ccf,           1,[ 4],       "-00C"),
-            0x28: (self._jr_z_r8,       1,[12,8],     "----"),
-            0x30: (self._jr_nc_r8,      2,[12,8],     "----"),
-            0x38: (self._jr_c_r8,       2,[12,8],     "----"),
             0x3E: (self._ld_a_d8,       2,[ 8],       "----"),
             0x40: (self._ld_b_b,        1,[ 4],       "----"),
             0x41: (self._ld_b_c,        1,[ 4],       "----"),
@@ -340,12 +340,6 @@ class CPU(SingletonBase):
     def _ld_sp_d16(self, operandAddr):
         self.CoreWords.SP = self._ld_r16_d16(operandAddr)
 
-
-    # Load A into address pointed to by BC
-    def _ld_mbc_a(self, operandAddr):
-        A = self.CoreReg.A
-        self.Memory.write(A, self.CoreWords.BC)
-
     # Increment 16 bit register by 1
     def _inc_r16(self,register):
         register = (register + 1) & 0xFFFF
@@ -545,3 +539,63 @@ class CPU(SingletonBase):
         self.Flags.n = 0
         self.Flags.c = bit0
     
+        # Load A into address pointed to by BC
+
+    def _ld_mr16_a(self, register):
+        self.Memory.writeByte(self.CoreReg.A, register)
+
+    def _ld_mbc_a(self, operandAddr):
+        self._ld_mr16_a(self.CoreWords.BC)
+
+    def _ld_mde_a(self, operandAddr):
+        self._ld_mr16_a(self.CoreWords.DE)
+
+    def _ld_mhlp_a(self, operandAddr):
+        self._ld_mr16_a(self.CoreWords.HL)
+        self.CoreWords.HL = (self.CoreWords.HL + 1) & 0xFFFF
+
+    def _ld_mhlm_a(self, operandAddr):
+        self._ld_mr16_a(self.CoreWords.HL)
+        self.CoreWords.HL = (self.CoreWords.HL - 1) & 0xFFFF
+
+    def _ld_m16_sp(self, operandAddr):
+        self.Memory.writeWord(self.CoreWords.SP, operandAddr)
+
+    def _ld_a_mr16(self,register):
+        byteValue = self.Memory.readByte(register)
+        self.Memory.writeByte(byteValue, self.CoreReg.A)
+
+    def _ld_a_mbc(self,operandAddr):
+        self._ld_a_mr16(self.CoreWords.BC)
+
+    def _ld_a_mde(self,operandAddr):
+        self._ld_a_mr16(self.CoreWords.DE)
+
+    def _ld_a_mhlp(self,operandAddr):
+        self._ld_a_mr16(self.CoreWords.HL)
+        self.CoreWords.HL = (self.CoreWords.HL + 1) & 0xFFFF
+
+    def _ld_a_mhlm(self,operandAddr):
+        self._ld_a_mr16(self.CoreWords.HL)
+        self.CoreWords.HL = (self.CoreWords.HL - 1) & 0xFFFF
+
+    def _stop_0(self,operandAddr):
+        # TODO: Implement this
+        pass
+
+    def _jr_r8(self,operandAddr):
+        operandAddr = np.int8(operandAddr)
+        self.CoreWords.PC += operandAddr
+
+    def _jr_nz_r8(self,operandAddr):
+        operandAddr = np.int8(operandAddr)
+        
+        if self.Flags.z == 0:
+            self.CoreWords.PC += operandAddr
+        else:
+            return 8 # Cycle Override
+
+    # Decimal Adjust Accumulator
+    #   Used for adjusting accumulator value to Binary Coded Decimal when desired
+    def _daa(self,operandAddr):
+        pass

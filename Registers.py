@@ -78,7 +78,7 @@ class Flag(SingletonBase):
     def z(self, bit):
         if not (bit == 1 or bit == 0):
             raise ValueError(f"bit = {bit}: Bit must be [0|1]")
-        self._c = bit
+        self._z = bit
 
 class RegByte(SingletonBase):
     _initialized = False # Flag to ensure __init__ runs only once
@@ -190,10 +190,9 @@ class RegWord(SingletonBase):
     def SP(self):
         return self._SP
     
-    # TODO: Need to determine whether carry/wrap around needs to be handled
     @SP.setter
     def SP(self,value:Word):
-        self._SP += value
+        self._SP = value
 
     def SP_Reset(self, value:Word = None):
         self._SP = 0

@@ -7,7 +7,7 @@ from Registers import Word
 GAMEBOY_MEMORY_SIZE = 0xFFFF
 
 class Memory(SingletonBase):
-    _initialzed = False
+    _initialized = False
 
     def __init__(self):
 
@@ -32,7 +32,7 @@ class Memory(SingletonBase):
             "HRAM"          : (0xFF80, 0xFFFE),
             "IE_REGISTER"   : (0xFFFF, 0xFFFF),
         }
-        self._initialzed = True
+        self._initialized = True
         
     def loadRom(self,byte, addr):
         romN_start, romN_end = self.memoryMap["ROM_BANK_N"]

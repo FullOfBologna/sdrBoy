@@ -31,13 +31,13 @@ class Flag(SingletonBase):
         self._flag = 0x00
 
     @property
-    def flag(self):
+    def F(self):
         # self._flag = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
-        # print(f"{self.flag}")
+        # print(f"{self.F}")
         return self._flag
 
-    @flag.setter
-    def flag(self, byte):
+    @F.setter
+    def F(self, byte):
         self.c = (byte & 0x10) >>  4
         self.h = (byte & 0x20) >>  5
         self.n = (byte & 0x40) >>  6
@@ -176,7 +176,7 @@ class RegWord(SingletonBase):
         print(f"Iniitalizing Flag instance {id(self)}")
 
         self.byte = byte
-        self._AF = (self.byte.A << 8) | flag.flag # Need to explicitly tell python to access the flags property
+        self._AF = (self.byte.A << 8) | flag.F # Need to explicitly tell python to access the flags property
         self._BC = (self.byte.B << 8) | self.byte.C
         self._DE = (self.byte.D << 8) | self.byte.E
         self._HL = (self.byte.H << 8) | self.byte.L
@@ -219,14 +219,14 @@ class RegWord(SingletonBase):
     # Getter will update the value when it is called, from referencing the underlying core register
     @property    
     def AF(self):
-        self._AF = (self.byte.A << 8) | self.flag
+        self._AF = (self.byte.A << 8) | self.F
         return self._AF
     
     @AF.setter
     def AF(self, word : Word):
         self.byte.A = (word & 0xFF00) >> 8
-        self.flag = (word & 0xFF)
-        self._AF = (self.byte.A << 8) | self.flag
+        self.F = (word & 0xFF)
+        self._AF = (self.byte.A << 8) | self.F
 
     @property    
     def BC(self):

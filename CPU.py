@@ -91,6 +91,7 @@ class CPU(SingletonBase):
             0x1D: (self._dec_e,         1,[ 4],       "Z1H-"),
             0x25: (self._dec_h,         1,[ 4],       "Z1H-"),
             0x2D: (self._dec_l,         1,[ 4],       "Z1H-"),
+            0x3E: (self._ld_a_d8,       2,[ 8],       "----"),
             0x06: (self._ld_b_d8,       2,[ 8],       "----"),
             0x0E: (self._ld_c_d8,       2,[ 8],       "----"),
             0x16: (self._ld_d_d8,       2,[ 8],       "----"),
@@ -127,7 +128,6 @@ class CPU(SingletonBase):
             # 0x37: (self._scf,           1,[ 4],       "-001"),
             # 0x2F: (self._cpl,           1,[ 4],       "-11-"),
             # 0x3F: (self._ccf,           1,[ 4],       "-00C"),
-            # 0x3E: (self._ld_a_d8,       2,[ 8],       "----"),
             # 0x40: (self._ld_b_b,        1,[ 4],       "----"),
             # 0x41: (self._ld_b_c,        1,[ 4],       "----"),
             # 0x42: (self._ld_b_d,        1,[ 4],       "----"),
@@ -330,8 +330,8 @@ class CPU(SingletonBase):
         return None, None
 
     def _ld_r16_d16(self, operandAddr):
-        lsB = self.Memory.read(operandAddr)
-        msB = self.Memory.read(operandAddr+1)
+        lsB = self.Memory.readByte(operandAddr)
+        msB = self.Memory.readByte(operandAddr+1)
         return (msB << 8) | lsB
 
     # Load Immediate d16 value into BC Register
@@ -456,11 +456,14 @@ class CPU(SingletonBase):
     def _dec_sp(self, operandAddr):
         self.CoreWords.SP = self._dec_r16(self.CoreWords.SP)
         return None,None
+    
     def _ld_r8_d8(self, operandAddr):
         # Read Operand Data and return
         d8 = self.Memory.readByte(operandAddr)
         return d8
-
+    def _ld_a_d8(self,operandAddr):
+        self.CoreReg.A = self._ld_r8_d8(operandAddr)
+        return None, None
     def _ld_b_d8(self,operandAddr):
         self.CoreReg.B = self._ld_r8_d8(operandAddr)
         return None, None

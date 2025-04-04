@@ -9,7 +9,7 @@ from utils import *
 
 def main():
     print("Running Test Cases...")
-    exit_code = pytest.main(['-v','tests/']) # Example: run tests verbosely
+    exit_code = pytest.main(['tests/']) # Example: run tests verbosely
     print(f"Pytest finished with exit code: {exit_code}")
     
     # Exit with the pytest status code

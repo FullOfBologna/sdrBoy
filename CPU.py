@@ -3,6 +3,8 @@ from SingletonBase import *
 from Registers import RegByte
 from Registers import RegWord
 from Registers import Flag
+import numpy as np
+
 
 from Memory import Memory
 
@@ -486,39 +488,37 @@ class CPU(SingletonBase):
     def _inc_mhl(self,operandAddr):
         # Increment Value stored in HL Location
         original = self.Memory.readByte(self.CoreWords.HL)
-        result = original + 1
+        result = (original + 1) & 0xFF
 
         self.Memory.writeByte(result,self.CoreWords.HL)
 
-
-        self.Flags.z == 1 if result == 0x00 else 0
-        self.Flags.n == 0
-        self.Flags.h == 1 if (original & 0xF) == 0xF else 0 # lower nibble of 0 requires a borrow from upper nibble
+        self.Flags.z = 1 if (result == 0x00) else 0
+        self.Flags.n = 0
+        self.Flags.h = 1 if (original & 0xF) == 0xF else 0 # lower nibble of 0 requires a borrow from upper nibble
         return None, None
 
     def _dec_mhl(self,operandAddr):
-        # Increment Value stored in HL Location
+        # Decrement Value stored in HL Location
         original = self.Memory.readByte(self.CoreWords.HL)
-        result = original - 1
+        result = (original - 1) & 0xFF
 
         self.Memory.writeByte(result,self.CoreWords.HL)
 
-        self.Flags.z == 1 if result == 0x00 else 0
-        self.Flags.n == 1
-        self.Flags.h == 1 if (original & 0xF) != 0x0 else 0
+        self.Flags.z = 1 if result == 0x00 else 0
+        self.Flags.n = 1
+        self.Flags.h = 1 if (original & 0xF) == 0x0 else 0
         return None, None
 
     # Adds r16 register to the value stored in hl
     def _add_hl_r16(self, register):
-        original = self.CoreWords.HL 
+        original = self.CoreWords.HL
         self.CoreWords.HL = (original + register) & 0xFFFF
 
-        halfCarryCalc = (original & 0xFFF) + (register + 0xFFF)
-        fullCarryCalc = (original) + register
-
+        # Half-carry: Carry from bit 11 to 12
+        self.Flags.h = 1 if ((original ^ register ^ self.CoreWords.HL) & 0x1000) else 0
+        # Full-carry: Carry from bit 15 to 16
+        self.Flags.c = 1 if register > (0xFFFF - original) else 0
         self.Flags.n = 0
-        self.Flags.h = 1 if (halfCarryCalc > 0xFFF) else 0
-        self.Flags.c = 1 if (fullCarryCalc > 0xFFFF) else 0
 
     def _add_hl_bc(self,operandAddr):
         self._add_hl_r16(self.CoreWords.BC)
@@ -573,8 +573,8 @@ class CPU(SingletonBase):
         originalCarry = self.Flags.c 
         orignal = self.CoreReg.A
 
-        bit7 = (orignal & 0x08) >> 7
-        self.CoreReg.A = self.CoreReg.A << 1 | originalCarry # set bit 0 to originalCarry Value
+        bit7 = (orignal & 0x80) >> 7
+        self.CoreReg.A = ((self.CoreReg.A << 1) & 0xFE) | originalCarry # set bit 0 to originalCarry Value
 
         self.Flags.z = 0
         self.Flags.h = 0
@@ -592,7 +592,7 @@ class CPU(SingletonBase):
         orignal = self.CoreReg.A
 
         bit0 = (orignal & 0x1)
-        self.CoreReg.A = self.CoreReg.A >> 1 | (originalCarry << 7) # set bit 7 to originalCarry Value
+        self.CoreReg.A = ((self.CoreReg.A >> 1) & 0x7F) | (originalCarry << 7) # set bit 7 to originalCarry Value
 
         self.Flags.z = 0
         self.Flags.h = 0

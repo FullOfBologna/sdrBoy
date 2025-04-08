@@ -162,6 +162,40 @@ class TestOpCodes:
         pytest.param("_add_hl_hl", 0x0800, 0x0800, 0x1000, "0010", id="ADD HL, HL: Half-carry"),
         pytest.param("_add_hl_sp", 0x1000, 0xF000, 0x0000, "0001", id="ADD HL, SP: Full carry"),
     ]
+
+    # Load (BC), A / Load (DE), A / Load (HL), A test cases
+    ld_mr16_a_test_cases = [
+        # reg_name, mem_addr, initial_a, expected_mem_value, id
+        pytest.param("BC", 0xC000, 0x55, 0x55, id="LD (BC), A: Basic"),
+        pytest.param("DE", 0xC001, 0x00, 0x00, id="LD (DE), A: Zero"),
+        pytest.param("HL", 0xC002, 0xFF, 0xFF, id="LD (HL), A: Max"),
+        pytest.param("BC", 0xD000, 0x12, 0x12, id="LD (BC), A: Different address"),
+        pytest.param("DE", 0xD001, 0x34, 0x34, id="LD (DE), A: Different address"),
+        pytest.param("HL", 0xD002, 0x78, 0x78, id="LD (HL), A: Different address"),
+        pytest.param("HL+", 0xC003, 0xAA, 0xAA, id="LD (HL+), A: Basic"),
+        pytest.param("HL-", 0xC004, 0xBB, 0xBB, id="LD (HL-), A: Basic"),
+    ]
+
+    ld_m16_sp_test_cases = [
+        # mem_addr, initial_sp, expected_lsb, expected_msb, id
+        pytest.param(0xC000, 0x1234, 0x34, 0x12, id="LD (a16), SP: Basic"),
+        pytest.param(0xD000, 0x0000, 0x00, 0x00, id="LD (a16), SP: Zero"),
+        pytest.param(0xE000, 0xFFFF, 0xFF, 0xFF, id="LD (a16), SP: Max"),
+        pytest.param(0xC050, 0xABCD, 0xCD, 0xAB, id="LD (a16), SP: Different address"),
+    ]
+#
+    ld_a_mr16_test_cases = [
+        # reg_name, mem_addr, initial_mem_value, expected_a, id
+        pytest.param("BC", 0xC000, 0x55, 0x55, id="LD A, (BC): Basic"),
+        pytest.param("DE", 0xC001, 0x00, 0x00, id="LD A, (DE): Zero"),
+        pytest.param("HL", 0xC002, 0xFF, 0xFF, id="LD A, (HL): Max"),
+        pytest.param("BC", 0xD000, 0x12, 0x12, id="LD A, (BC): Different address"),
+        pytest.param("DE", 0xD001, 0x34, 0x34, id="LD A, (DE): Different address"),
+        pytest.param("HL", 0xD002, 0x78, 0x78, id="LD A, (HL): Different address"),
+        pytest.param("HL+", 0xC003, 0xAA, 0xAA, id="LD A, (HL+): Basic"),
+        pytest.param("HL-", 0xC004, 0xBB, 0xBB, id="LD A, (HL-): Basic"),
+    ]
+
     #==========================================
     #           TEST IMPLEMENTATIONS          
     #==========================================
@@ -469,5 +503,97 @@ class TestOpCodes:
         assert cycle_override is None, "Cycle override should be None"
 
 
-    # @pytest.mark.parametrize("method_name, initial_value, expected_value, expected_flags", memory_operation_test_cases)
-    # def test_ld_memory_operations((self, cpu))
+    @pytest.mark.parametrize("reg_name, mem_addr, initial_a, expected_mem_value", ld_mr16_a_test_cases)
+    def test_ld_mr16_a(self, cpu, reg_name, mem_addr, initial_a, expected_mem_value):
+        """Tests load (BC), A / load (DE), A / load (HL), A instructions"""
+        # Arrange
+        cpu.CoreWords.HL = mem_addr
+        initial_hl = cpu.CoreWords.HL
+        if reg_name == "HL+":
+            cpu.CoreWords.HL = mem_addr
+            method_name = "_ld_mhlp_a"
+        elif reg_name == "HL-":
+            cpu.CoreWords.HL = mem_addr
+            method_name = "_ld_mhlm_a"
+        else:
+            setattr(cpu.CoreWords, reg_name, mem_addr)  # Set r16 to point to memory address
+            method_name = f"_ld_m{reg_name.lower()}_a"
+
+        cpu.CoreReg.A = initial_a  # Set initial value of A
+        cpu.Memory.writeByte(0x00, mem_addr)  # Initialize memory location
+
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        pc_override, cycle_override = instruction_method(None)
+
+        # Assert
+        memory_value = cpu.Memory.readByte(mem_addr)
+        assert memory_value == expected_mem_value, f"Memory at {mem_addr:04X} expected {expected_mem_value:02X}, got {memory_value:02X}"
+
+        if reg_name == "HL+":
+            assert cpu.CoreWords.HL == mem_addr + 1, "HL+ post-increment failed"
+        elif reg_name == "HL-":
+            assert cpu.CoreWords.HL == mem_addr - 1, "HL- post-decrement failed"
+        else:
+            assert cpu.CoreWords.HL == initial_hl, "HL should not be modified"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None"
+
+    @pytest.mark.parametrize("mem_addr, initial_sp, expected_lsb, expected_msb", ld_m16_sp_test_cases)
+    def test_ld_m16_sp(self, cpu, mem_addr, initial_sp, expected_lsb, expected_msb):
+        """Tests load (a16), SP instruction"""
+        # Arrange
+        cpu.CoreWords.SP = initial_sp
+        cpu.Memory.writeByte(0x00, mem_addr)  # Initialize memory location
+        cpu.Memory.writeByte(0x00, mem_addr + 1)  # Initialize memory location + 1
+
+        # Act
+        pc_override, cycle_override = cpu._ld_m16_sp(mem_addr)
+
+        # Assert
+        memory_lsb = cpu.Memory.readByte(mem_addr)
+        memory_msb = cpu.Memory.readByte(mem_addr + 1)
+        assert memory_lsb == expected_lsb, f"LSB at {mem_addr:04X} expected {expected_lsb:02X}, got {memory_lsb:02X}"
+        assert memory_msb == expected_msb, f"MSB at {mem_addr + 1:04X} expected {expected_msb:02X}, got {memory_msb:02X}"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None"
+
+    @pytest.mark.parametrize("reg_name, mem_addr, initial_mem_value, expected_a", ld_a_mr16_test_cases)
+    def test_ld_a_mr16(self, cpu, reg_name, mem_addr, initial_mem_value, expected_a):
+        """Tests load A, (BC) / load A, (DE) / load A, (HL) instructions"""
+        
+        # Arrange
+        cpu.CoreWords.HL = mem_addr
+        initial_hl = cpu.CoreWords.HL
+        if reg_name == "HL+":
+            cpu.CoreWords.HL = mem_addr
+            method_name = "_ld_a_mhlp"
+        elif reg_name == "HL-":
+            cpu.CoreWords.HL = mem_addr
+            method_name = "_ld_a_mhlm"
+        else:
+            setattr(cpu.CoreWords, reg_name, mem_addr)  # Set r16 to point to memory address
+            method_name = f"_ld_a_m{reg_name.lower()}"
+
+        cpu.Memory.writeByte(initial_mem_value, mem_addr)  # Initialize memory location
+
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        pc_override, cycle_override = instruction_method(None)
+
+        # Assert
+        assert cpu.CoreReg.A == expected_a, f"A register expected {expected_a:02X}, got {cpu.CoreReg.A:02X}"
+
+        if reg_name == "HL+":
+            assert cpu.CoreWords.HL == mem_addr + 1, "HL+ post-increment failed"
+        elif reg_name == "HL-":
+            assert cpu.CoreWords.HL == mem_addr - 1, "HL- post-decrement failed"
+        else:
+            assert cpu.CoreWords.HL == initial_hl, "HL should not be modified"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None"

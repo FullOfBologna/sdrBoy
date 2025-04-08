@@ -115,18 +115,20 @@ class CPU(SingletonBase):
             0x12: (self._ld_mde_a,      1,[ 8],       "----"),
             0x22: (self._ld_mhlp_a,     1,[ 8],       "----"),
             0x32: (self._ld_mhlm_a,     1,[ 8],       "----"),
+            0x77: (self._ld_mhl_a,      1,[ 8],       "----"),
             0x08: (self._ld_m16_sp,     3,[20],       "----"),
             0x0A: (self._ld_a_mbc,      1,[ 8],       "----"),
             0x1A: (self._ld_a_mde,      1,[ 8],       "----"),
             0x2A: (self._ld_a_mhlp,     1,[ 8],       "----"),
             0x3A: (self._ld_a_mhlm,     1,[ 8],       "----"),
+            0x7E: (self._ld_a_mhl,      1,[ 8],       "----"),
             0x10: (self._stop_0,        2,[ 4],       "----"),
             0x18: (self._jr_r8,         2,[12],       "----"),
             0x20: (self._jr_nz_r8,      2,[12,8],     "----"),
-            # 0x30: (self._jr_nc_r8,      2,[12,8],     "----"),
-            # 0x28: (self._jr_z_r8,       2,[12,8],     "----"),
-            # 0x38: (self._jr_c_r8,       2,[12,8],     "----"),
-            # 0x27: (self._daa,           1,[ 4],       "Z-0C"),
+            0x30: (self._jr_nc_r8,      2,[12,8],     "----"),
+            0x28: (self._jr_z_r8,       2,[12,8],     "----"),
+            0x38: (self._jr_c_r8,       2,[12,8],     "----"),
+            0x27: (self._daa,           1,[ 4],       "Z-0C"),
             # 0x37: (self._scf,           1,[ 4],       "-001"),
             # 0x2F: (self._cpl,           1,[ 4],       "-11-"),
             # 0x3F: (self._ccf,           1,[ 4],       "-00C"),
@@ -136,7 +138,7 @@ class CPU(SingletonBase):
             # 0x43: (self._ld_b_e,        1,[ 4],       "----"),
             # 0x44: (self._ld_b_h,        1,[ 4],       "----"),
             # 0x45: (self._ld_b_l,        1,[ 4],       "----"),
-            # 0x46: (self._ld_b_hl,       1,[ 8],       "----"),
+            # 0x46: (self._ld_b_mhl,       1,[ 8],       "----"),
             # 0x47: (self._ld_b_a,        1,[ 4],       "----"),
             # 0x48: (self._ld_c_b,        1,[ 4],       "----"),
             # 0x49: (self._ld_c_c,        1,[ 4],       "----"),
@@ -144,7 +146,7 @@ class CPU(SingletonBase):
             # 0x4B: (self._ld_c_e,        1,[ 4],       "----"),
             # 0x4C: (self._ld_c_h,        1,[ 4],       "----"),
             # 0x4D: (self._ld_c_l,        1,[ 4],       "----"),
-            # 0x4E: (self._ld_c_hl,       1,[ 8],       "----"),
+            # 0x4E: (self._ld_c_mhl,       1,[ 8],       "----"),
             # 0x4F: (self._ld_c_a,        1,[ 4],       "----"),
             # 0x50: (self._ld_d_b,        1,[ 4],       "----"),
             # 0x51: (self._ld_d_c,        1,[ 4],       "----"),
@@ -152,7 +154,7 @@ class CPU(SingletonBase):
             # 0x53: (self._ld_d_e,        1,[ 4],       "----"),
             # 0x54: (self._ld_d_h,        1,[ 4],       "----"),
             # 0x55: (self._ld_d_l,        1,[ 4],       "----"),
-            # 0x56: (self._ld_d_hl,       1,[ 8],       "----"),
+            # 0x56: (self._ld_d_mhl,       1,[ 8],       "----"),
             # 0x57: (self._ld_d_a,        1,[ 4],       "----"),
             # 0x58: (self._ld_e_b,        1,[ 4],       "----"),
             # 0x59: (self._ld_e_c,        1,[ 4],       "----"),
@@ -160,7 +162,7 @@ class CPU(SingletonBase):
             # 0x5B: (self._ld_e_e,        1,[ 4],       "----"),
             # 0x5C: (self._ld_e_h,        1,[ 4],       "----"),
             # 0x5D: (self._ld_e_l,        1,[ 4],       "----"),
-            # 0x5E: (self._ld_e_hl,       1,[ 8],       "----"),
+            # 0x5E: (self._ld_e_mhl,       1,[ 8],       "----"),
             # 0x5F: (self._ld_e_a,        1,[ 4],       "----"),
             # 0x60: (self._ld_h_b,        1,[ 4],       "----"),
             # 0x61: (self._ld_h_c,        1,[ 4],       "----"),
@@ -168,7 +170,7 @@ class CPU(SingletonBase):
             # 0x63: (self._ld_h_e,        1,[ 4],       "----"),
             # 0x64: (self._ld_h_h,        1,[ 4],       "----"),
             # 0x65: (self._ld_h_l,        1,[ 4],       "----"),
-            # 0x66: (self._ld_h_hl,       1,[ 8],       "----"),
+            # 0x66: (self._ld_h_mhl,       1,[ 8],       "----"),
             # 0x67: (self._ld_h_a,        1,[ 4],       "----"),
             # 0x68: (self._ld_l_b,        1,[ 4],       "----"),
             # 0x69: (self._ld_l_c,        1,[ 4],       "----"),
@@ -176,7 +178,7 @@ class CPU(SingletonBase):
             # 0x6B: (self._ld_l_e,        1,[ 4],       "----"),
             # 0x6C: (self._ld_l_h,        1,[ 4],       "----"),
             # 0x6D: (self._ld_l_l,        1,[ 4],       "----"),
-            # 0x6E: (self._ld_l_hl,       1,[ 8],       "----"),
+            # 0x6E: (self._ld_l_mhl,       1,[ 8],       "----"),
             # 0x6F: (self._ld_l_a,        1,[ 4],       "----"),
             # 0x70: (self._ld_hl_b,       1,[ 8],       "----"),
             # 0x71: (self._ld_hl_c,       1,[ 8],       "----"),
@@ -185,14 +187,12 @@ class CPU(SingletonBase):
             # 0x74: (self._ld_hl_h,       1,[ 8],       "----"),
             # 0x75: (self._ld_hl_l,       1,[ 8],       "----"),
             # 0x76: (self._halt,          1,[ 4],       "----"),
-            # 0x77: (self._ld_hl_a,       1,[ 4],       "----"),
             # 0x78: (self._ld_a_b,        1,[ 4],       "----"),
             # 0x79: (self._ld_a_c,        1,[ 4],       "----"),
             # 0x7A: (self._ld_a_d,        1,[ 4],       "----"),
             # 0x7B: (self._ld_a_e,        1,[ 4],       "----"),
             # 0x7C: (self._ld_a_h,        1,[ 4],       "----"),
             # 0x7D: (self._ld_a_l,        1,[ 4],       "----"),
-            # 0x7E: (self._ld_a_hl,       1,[ 8],       "----"),
             # 0x7F: (self._ld_a_a,        1,[ 4],       "----"),
             # 0x80: (self._add_a_b,       1,[ 4],       "Z0HC"),
             # 0x81: (self._add_a_c,       1,[ 4],       "Z0HC"),
@@ -600,7 +600,10 @@ class CPU(SingletonBase):
         self.Flags.c = bit0
         return None, None
 
-        # Load A into address pointed to by BC
+        # Load A into address pointed to by memory location in register pair
+#    #   BC, DE, HL+, HL-, SP
+    #   HL+ increments the HL register after writing the value
+    #   HL- decrements the HL register after writing the value
 
     def _ld_mr16_a(self, register):
         self.Memory.writeByte(self.CoreReg.A, register)
@@ -623,6 +626,10 @@ class CPU(SingletonBase):
         self._ld_mr16_a(self.CoreWords.HL)
         self.CoreWords.HL = (self.CoreWords.HL - 1) & 0xFFFF
         return None, None
+    
+    def _ld_mhl_a(self, operandAddr):
+        self._ld_mr16_a(self.CoreWords.HL)
+        return None, None
 
     def _ld_m16_sp(self, operandAddr):
         self.Memory.writeWord(self.CoreWords.SP, operandAddr)
@@ -630,7 +637,7 @@ class CPU(SingletonBase):
 
     def _ld_a_mr16(self,register):
         byteValue = self.Memory.readByte(register)
-        self.Memory.writeByte(byteValue, self.CoreReg.A)
+        self.CoreReg.A = byteValue
         return None, None
 
     def _ld_a_mbc(self,operandAddr):
@@ -651,14 +658,23 @@ class CPU(SingletonBase):
         self.CoreWords.HL = (self.CoreWords.HL - 1) & 0xFFFF
         return None, None
 
+    def _ld_a_mhl(self,operandAddr):
+        self._ld_a_mr16(self.CoreWords.HL)
+        return None, None
+
     def _stop_0(self,operandAddr):
         # TODO: Implement this
         pass
 
+    # jump related to provided 8 bit signed value
+    #   PC <-- PC + signed 8-bit value
     def _jr_r8(self,operandAddr):
         operandAddr = np.int8(operandAddr)
         self.CoreWords.PC += operandAddr
         return None, None
+
+    # Jump relative to procided 8 bit signed value if the Zero Flag is not set
+    #   PC <-- PC + signed 8-bit value
 
     def _jr_nz_r8(self,operandAddr):
         operandAddr = np.int8(operandAddr)
@@ -668,6 +684,19 @@ class CPU(SingletonBase):
         else:
             return None,8 # Cycle Override
         return None, None
+
+    # Jump relative to provided 8 bit signed value if the Carry Flag is not set
+    def _jr_nc_r8(self,operandAddr):
+        pass
+
+    # Jump relative to provided 8 bit signed value if the Zero Flag is set
+    def _jr_z_r8(self,operandAddr):
+        pass
+
+    # Jump relative to provided 8 bit signed value if the Carry Flag is set
+    def _jr_c_r8(self,operandAddr):
+        pass
+
 
     # Decimal Adjust Accumulator
     #   Used for adjusting accumulator value to Binary Coded Decimal when desired

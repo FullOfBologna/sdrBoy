@@ -132,68 +132,68 @@ class CPU(SingletonBase):
             # 0x37: (self._scf,           1,[ 4],       "-001"),
             # 0x2F: (self._cpl,           1,[ 4],       "-11-"),
             # 0x3F: (self._ccf,           1,[ 4],       "-00C"),
-            # 0x40: (self._ld_b_b,        1,[ 4],       "----"),
-            # 0x41: (self._ld_b_c,        1,[ 4],       "----"),
-            # 0x42: (self._ld_b_d,        1,[ 4],       "----"),
-            # 0x43: (self._ld_b_e,        1,[ 4],       "----"),
-            # 0x44: (self._ld_b_h,        1,[ 4],       "----"),
-            # 0x45: (self._ld_b_l,        1,[ 4],       "----"),
-            # 0x46: (self._ld_b_mhl,       1,[ 8],       "----"),
-            # 0x47: (self._ld_b_a,        1,[ 4],       "----"),
-            # 0x48: (self._ld_c_b,        1,[ 4],       "----"),
-            # 0x49: (self._ld_c_c,        1,[ 4],       "----"),
-            # 0x4A: (self._ld_c_d,        1,[ 4],       "----"),
-            # 0x4B: (self._ld_c_e,        1,[ 4],       "----"),
-            # 0x4C: (self._ld_c_h,        1,[ 4],       "----"),
-            # 0x4D: (self._ld_c_l,        1,[ 4],       "----"),
-            # 0x4E: (self._ld_c_mhl,       1,[ 8],       "----"),
-            # 0x4F: (self._ld_c_a,        1,[ 4],       "----"),
-            # 0x50: (self._ld_d_b,        1,[ 4],       "----"),
-            # 0x51: (self._ld_d_c,        1,[ 4],       "----"),
-            # 0x52: (self._ld_d_d,        1,[ 4],       "----"),
-            # 0x53: (self._ld_d_e,        1,[ 4],       "----"),
-            # 0x54: (self._ld_d_h,        1,[ 4],       "----"),
-            # 0x55: (self._ld_d_l,        1,[ 4],       "----"),
-            # 0x56: (self._ld_d_mhl,       1,[ 8],       "----"),
-            # 0x57: (self._ld_d_a,        1,[ 4],       "----"),
-            # 0x58: (self._ld_e_b,        1,[ 4],       "----"),
-            # 0x59: (self._ld_e_c,        1,[ 4],       "----"),
-            # 0x5A: (self._ld_e_d,        1,[ 4],       "----"),
-            # 0x5B: (self._ld_e_e,        1,[ 4],       "----"),
-            # 0x5C: (self._ld_e_h,        1,[ 4],       "----"),
-            # 0x5D: (self._ld_e_l,        1,[ 4],       "----"),
-            # 0x5E: (self._ld_e_mhl,       1,[ 8],       "----"),
-            # 0x5F: (self._ld_e_a,        1,[ 4],       "----"),
-            # 0x60: (self._ld_h_b,        1,[ 4],       "----"),
-            # 0x61: (self._ld_h_c,        1,[ 4],       "----"),
-            # 0x62: (self._ld_h_d,        1,[ 4],       "----"),
-            # 0x63: (self._ld_h_e,        1,[ 4],       "----"),
-            # 0x64: (self._ld_h_h,        1,[ 4],       "----"),
-            # 0x65: (self._ld_h_l,        1,[ 4],       "----"),
-            # 0x66: (self._ld_h_mhl,       1,[ 8],       "----"),
-            # 0x67: (self._ld_h_a,        1,[ 4],       "----"),
-            # 0x68: (self._ld_l_b,        1,[ 4],       "----"),
-            # 0x69: (self._ld_l_c,        1,[ 4],       "----"),
-            # 0x6A: (self._ld_l_d,        1,[ 4],       "----"),
-            # 0x6B: (self._ld_l_e,        1,[ 4],       "----"),
-            # 0x6C: (self._ld_l_h,        1,[ 4],       "----"),
-            # 0x6D: (self._ld_l_l,        1,[ 4],       "----"),
-            # 0x6E: (self._ld_l_mhl,       1,[ 8],       "----"),
-            # 0x6F: (self._ld_l_a,        1,[ 4],       "----"),
-            # 0x70: (self._ld_hl_b,       1,[ 8],       "----"),
-            # 0x71: (self._ld_hl_c,       1,[ 8],       "----"),
-            # 0x72: (self._ld_hl_d,       1,[ 8],       "----"),
-            # 0x73: (self._ld_hl_e,       1,[ 8],       "----"),
-            # 0x74: (self._ld_hl_h,       1,[ 8],       "----"),
-            # 0x75: (self._ld_hl_l,       1,[ 8],       "----"),
+            0x40: (self._ld_b_b,        1,[ 4],       "----"),
+            0x41: (self._ld_b_c,        1,[ 4],       "----"),
+            0x42: (self._ld_b_d,        1,[ 4],       "----"),
+            0x43: (self._ld_b_e,        1,[ 4],       "----"),
+            0x44: (self._ld_b_h,        1,[ 4],       "----"),
+            0x45: (self._ld_b_l,        1,[ 4],       "----"),
+            0x47: (self._ld_b_a,        1,[ 4],       "----"),
+            0x48: (self._ld_c_b,        1,[ 4],       "----"),
+            0x49: (self._ld_c_c,        1,[ 4],       "----"),
+            0x4A: (self._ld_c_d,        1,[ 4],       "----"),
+            0x4B: (self._ld_c_e,        1,[ 4],       "----"),
+            0x4C: (self._ld_c_h,        1,[ 4],       "----"),
+            0x4D: (self._ld_c_l,        1,[ 4],       "----"),
+            0x4F: (self._ld_c_a,        1,[ 4],       "----"),
+            0x50: (self._ld_d_b,        1,[ 4],       "----"),
+            0x51: (self._ld_d_c,        1,[ 4],       "----"),
+            0x52: (self._ld_d_d,        1,[ 4],       "----"),
+            0x53: (self._ld_d_e,        1,[ 4],       "----"),
+            0x54: (self._ld_d_h,        1,[ 4],       "----"),
+            0x55: (self._ld_d_l,        1,[ 4],       "----"),
+            0x57: (self._ld_d_a,        1,[ 4],       "----"),
+            0x58: (self._ld_e_b,        1,[ 4],       "----"),
+            0x59: (self._ld_e_c,        1,[ 4],       "----"),
+            0x5A: (self._ld_e_d,        1,[ 4],       "----"),
+            0x5B: (self._ld_e_e,        1,[ 4],       "----"),
+            0x5C: (self._ld_e_h,        1,[ 4],       "----"),
+            0x5D: (self._ld_e_l,        1,[ 4],       "----"),
+            0x5F: (self._ld_e_a,        1,[ 4],       "----"),
+            0x60: (self._ld_h_b,        1,[ 4],       "----"),
+            0x61: (self._ld_h_c,        1,[ 4],       "----"),
+            0x62: (self._ld_h_d,        1,[ 4],       "----"),
+            0x63: (self._ld_h_e,        1,[ 4],       "----"),
+            0x64: (self._ld_h_h,        1,[ 4],       "----"),
+            0x65: (self._ld_h_l,        1,[ 4],       "----"),
+            0x67: (self._ld_h_a,        1,[ 4],       "----"),
+            0x68: (self._ld_l_b,        1,[ 4],       "----"),
+            0x69: (self._ld_l_c,        1,[ 4],       "----"),
+            0x6A: (self._ld_l_d,        1,[ 4],       "----"),
+            0x6B: (self._ld_l_e,        1,[ 4],       "----"),
+            0x6C: (self._ld_l_h,        1,[ 4],       "----"),
+            0x6D: (self._ld_l_l,        1,[ 4],       "----"),
+            0x6F: (self._ld_l_a,        1,[ 4],       "----"),
+            0x78: (self._ld_a_b,        1,[ 4],       "----"),
+            0x79: (self._ld_a_c,        1,[ 4],       "----"),
+            0x7A: (self._ld_a_d,        1,[ 4],       "----"),
+            0x7B: (self._ld_a_e,        1,[ 4],       "----"),
+            0x7C: (self._ld_a_h,        1,[ 4],       "----"),
+            0x7D: (self._ld_a_l,        1,[ 4],       "----"),
+            0x7F: (self._ld_a_a,        1,[ 4],       "----"),
+            0x46: (self._ld_b_mhl,       1,[ 8],       "----"),
+            0x4E: (self._ld_c_mhl,       1,[ 8],       "----"),
+            0x56: (self._ld_d_mhl,       1,[ 8],       "----"),
+            0x5E: (self._ld_e_mhl,       1,[ 8],       "----"),
+            0x66: (self._ld_h_mhl,       1,[ 8],       "----"),
+            0x6E: (self._ld_l_mhl,       1,[ 8],       "----"),
+            0x70: (self._ld_mhl_b,       1,[ 8],       "----"),
+            0x71: (self._ld_mhl_c,       1,[ 8],       "----"),
+            0x72: (self._ld_mhl_d,       1,[ 8],       "----"),
+            0x73: (self._ld_mhl_e,       1,[ 8],       "----"),
+            0x74: (self._ld_mhl_h,       1,[ 8],       "----"),
+            0x75: (self._ld_mhl_l,       1,[ 8],       "----"),
             # 0x76: (self._halt,          1,[ 4],       "----"),
-            # 0x78: (self._ld_a_b,        1,[ 4],       "----"),
-            # 0x79: (self._ld_a_c,        1,[ 4],       "----"),
-            # 0x7A: (self._ld_a_d,        1,[ 4],       "----"),
-            # 0x7B: (self._ld_a_e,        1,[ 4],       "----"),
-            # 0x7C: (self._ld_a_h,        1,[ 4],       "----"),
-            # 0x7D: (self._ld_a_l,        1,[ 4],       "----"),
-            # 0x7F: (self._ld_a_a,        1,[ 4],       "----"),
             # 0x80: (self._add_a_b,       1,[ 4],       "Z0HC"),
             # 0x81: (self._add_a_c,       1,[ 4],       "Z0HC"),
             # 0x82: (self._add_a_d,       1,[ 4],       "Z0HC"),
@@ -671,7 +671,7 @@ class CPU(SingletonBase):
     def _jr_r8(self,operandAddr):
         operandAddr = np.int8(operandAddr)
         self.CoreWords.PC += operandAddr
-        return None, None
+        return None, 12
 
     # Jump relative to procided 8 bit signed value if the Zero Flag is not set
     #   PC <-- PC + signed 8-bit value
@@ -683,22 +683,242 @@ class CPU(SingletonBase):
             self.CoreWords.PC += operandAddr
         else:
             return None,8 # Cycle Override
-        return None, None
+        return None, 12
 
     # Jump relative to provided 8 bit signed value if the Carry Flag is not set
     def _jr_nc_r8(self,operandAddr):
-        pass
+
+        operandAddr = np.int8(operandAddr)
+
+        if self.Flags.c == 0:
+            self.CoreWords.PC += operandAddr
+        else: 
+            return None,8
+        return None, 12
 
     # Jump relative to provided 8 bit signed value if the Zero Flag is set
     def _jr_z_r8(self,operandAddr):
-        pass
+        operandAddr = np.int8(operandAddr)
+
+        if self.Flags.z == 1:
+            self.CoreWords.PC += operandAddr
+        else:
+            return None,8
+        return None, 12
 
     # Jump relative to provided 8 bit signed value if the Carry Flag is set
     def _jr_c_r8(self,operandAddr):
-        pass
+        operandAddr = np.int8(operandAddr)
+
+        if self.Flags.c == 1:
+            self.CoreWords.PC += operandAddr
+        else:
+            return None,8
+        return None, 12
 
 
     # Decimal Adjust Accumulator
     #   Used for adjusting accumulator value to Binary Coded Decimal when desired
     def _daa(self,operandAddr):
+
+
         pass
+
+    # load 8 bit register with value of another 8 bit register
+    #   r8 <-- r8
+    def _ld_a_b(self,operandAddr):  
+        self.CoreReg.A = self.CoreReg.B
+        return None, None
+    def _ld_a_c(self,operandAddr):  
+        self.CoreReg.A = self.CoreReg.C
+        return None, None
+    def _ld_a_d(self,operandAddr):  
+        self.CoreReg.A = self.CoreReg.D
+        return None, None
+    def _ld_a_e(self,operandAddr):  
+        self.CoreReg.A = self.CoreReg.E
+        return None, None
+    def _ld_a_h(self,operandAddr):  
+        self.CoreReg.A = self.CoreReg.H
+        return None, None
+    def _ld_a_l(self,operandAddr):  
+        self.CoreReg.A = self.CoreReg.L
+        return None, None
+    def _ld_b_b(self,operandAddr):  
+        self.CoreReg.B = self.CoreReg.B
+        return None, None
+    def _ld_b_c(self,operandAddr):  
+        self.CoreReg.B = self.CoreReg.C
+        return None, None
+    def _ld_b_d(self,operandAddr):  
+        self.CoreReg.B = self.CoreReg.D
+        return None, None
+    def _ld_b_e(self,operandAddr):  
+        self.CoreReg.B = self.CoreReg.E
+        return None, None
+    def _ld_b_h(self,operandAddr):  
+        self.CoreReg.B = self.CoreReg.H
+        return None, None
+    def _ld_b_l(self,operandAddr):  
+        self.CoreReg.B = self.CoreReg.L
+        return None, None
+    def _ld_c_b(self,operandAddr):  
+        self.CoreReg.C = self.CoreReg.B
+        return None, None
+    def _ld_c_c(self,operandAddr):  
+        self.CoreReg.C = self.CoreReg.C
+        return None, None
+    def _ld_c_d(self,operandAddr):  
+        self.CoreReg.C = self.CoreReg.D
+        return None, None
+    def _ld_c_e(self,operandAddr):  
+        self.CoreReg.C = self.CoreReg.E
+        return None, None
+    def _ld_c_h(self,operandAddr):  
+        self.CoreReg.C = self.CoreReg.H
+        return None, None
+    def _ld_c_l(self,operandAddr):  
+        self.CoreReg.C = self.CoreReg.L
+        return None, None
+    def _ld_d_b(self,operandAddr):  
+        self.CoreReg.D = self.CoreReg.B
+        return None, None
+    def _ld_d_c(self,operandAddr):  
+        self.CoreReg.D = self.CoreReg.C
+        return None, None
+    def _ld_d_d(self,operandAddr):  
+        self.CoreReg.D = self.CoreReg.D
+        return None, None
+    def _ld_d_e(self,operandAddr):  
+        self.CoreReg.D = self.CoreReg.E
+        return None, None
+    def _ld_d_h(self,operandAddr):  
+        self.CoreReg.D = self.CoreReg.H
+        return None, None
+    def _ld_d_l(self,operandAddr):  
+        self.CoreReg.D = self.CoreReg.L
+        return None, None
+    def _ld_e_b(self,operandAddr):  
+        self.CoreReg.E = self.CoreReg.B
+        return None, None
+    def _ld_e_c(self,operandAddr):  
+        self.CoreReg.E = self.CoreReg.C
+        return None, None
+    def _ld_e_d(self,operandAddr):  
+        self.CoreReg.E = self.CoreReg.D
+        return None, None
+    def _ld_e_e(self,operandAddr):  
+        self.CoreReg.E = self.CoreReg.E
+        return None, None
+    def _ld_e_h(self,operandAddr):  
+        self.CoreReg.E = self.CoreReg.H
+        return None, None
+    def _ld_e_l(self,operandAddr):  
+        self.CoreReg.E = self.CoreReg.L
+        return None, None
+    def _ld_h_b(self,operandAddr):  
+        self.CoreReg.H = self.CoreReg.B
+        return None, None
+    def _ld_h_c(self,operandAddr):  
+        self.CoreReg.H = self.CoreReg.C
+        return None, None
+    def _ld_h_d(self,operandAddr):  
+        self.CoreReg.H = self.CoreReg.D
+        return None, None
+    def _ld_h_e(self,operandAddr):  
+        self.CoreReg.H = self.CoreReg.E
+        return None, None
+    def _ld_h_h(self,operandAddr):  
+        self.CoreReg.H = self.CoreReg.H
+        return None, None
+    def _ld_h_l(self,operandAddr):  
+        self.CoreReg.H = self.CoreReg.L
+        return None, None
+    def _ld_l_b(self,operandAddr):  
+        self.CoreReg.L = self.CoreReg.B
+        return None, None
+    def _ld_l_c(self,operandAddr):  
+        self.CoreReg.L = self.CoreReg.C
+        return None, None
+    def _ld_l_d(self,operandAddr):  
+        self.CoreReg.L = self.CoreReg.D
+        return None, None
+    def _ld_l_e(self,operandAddr):  
+        self.CoreReg.L = self.CoreReg.E
+        return None, None
+    def _ld_l_h(self,operandAddr):  
+        self.CoreReg.L = self.CoreReg.H
+        return None, None
+    def _ld_l_l(self,operandAddr):  
+        self.CoreReg.L = self.CoreReg.L
+        return None, None
+    def _ld_a_a(self,operandAddr):
+        self.CoreReg.A = self.CoreReg.A
+        return None, None
+    def _ld_b_a(self,operandAddr):  
+        self.CoreReg.B = self.CoreReg.A
+        return None, None
+    def _ld_c_a(self,operandAddr):  
+        self.CoreReg.C = self.CoreReg.A
+        return None, None
+    def _ld_d_a(self,operandAddr):  
+        self.CoreReg.D = self.CoreReg.A
+        return None, None
+    def _ld_e_a(self,operandAddr):  
+        self.CoreReg.E = self.CoreReg.A
+        return None, None
+    def _ld_h_a(self,operandAddr):  
+        self.CoreReg.H = self.CoreReg.A
+        return None, None
+    def _ld_l_a(self,operandAddr):  
+        self.CoreReg.L = self.CoreReg.A
+        return None, None
+    
+
+    def ld_r8_mhl(self,operandAddr):
+        # Load the value stored in the HL register into the provided 8 bit register
+        byteValue = self.Memory.readByte(self.CoreWords.HL)
+        return byteValue
+    
+    def _ld_b_mhl(self,operandAddr):
+        self.CoreReg.B = self.ld_r8_mhl(operandAddr)
+        return None, None
+    def _ld_c_mhl(self,operandAddr):
+        self.CoreReg.C = self.ld_r8_mhl(operandAddr)
+        return None, None
+    def _ld_d_mhl(self,operandAddr):
+        self.CoreReg.D = self.ld_r8_mhl(operandAddr)
+        return None, None
+    def _ld_e_mhl(self,operandAddr):
+        self.CoreReg.E = self.ld_r8_mhl(operandAddr)
+        return None, None
+    def _ld_h_mhl(self,operandAddr):
+        self.CoreReg.H = self.ld_r8_mhl(operandAddr)
+        return None, None
+    def _ld_l_mhl(self,operandAddr):
+        self.CoreReg.L = self.ld_r8_mhl(operandAddr)
+        return None, None
+    
+    def _ld_mhl_r8(self,register):
+        # Load the value of the provided 8 bit register into the location pointed to by HL
+        self.Memory.writeByte(register, self.CoreWords.HL)
+        return None, None
+    
+    def _ld_mhl_b(self,operandAddr):
+        self._ld_mhl_r8(self.CoreReg.B)
+        return None, None
+    def _ld_mhl_c(self,operandAddr):
+        self._ld_mhl_r8(self.CoreReg.C)
+        return None, None
+    def _ld_mhl_d(self,operandAddr):
+        self._ld_mhl_r8(self.CoreReg.D)
+        return None, None
+    def _ld_mhl_e(self,operandAddr):
+        self._ld_mhl_r8(self.CoreReg.E)
+        return None, None
+    def _ld_mhl_h(self,operandAddr):
+        self._ld_mhl_r8(self.CoreReg.H)
+        return None, None
+    def _ld_mhl_l(self,operandAddr):
+        self._ld_mhl_r8(self.CoreReg.L)
+        return None, None

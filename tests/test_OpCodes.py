@@ -2,6 +2,7 @@ import pytest
 
 from CPU import CPU
 from Memory import Memory
+import numpy as np
 
 #==========================================
 #           PYTEST FIXTURES             
@@ -194,6 +195,96 @@ class TestOpCodes:
         pytest.param("HL", 0xD002, 0x78, 0x78, id="LD A, (HL): Different address"),
         pytest.param("HL+", 0xC003, 0xAA, 0xAA, id="LD A, (HL+): Basic"),
         pytest.param("HL-", 0xC004, 0xBB, 0xBB, id="LD A, (HL-): Basic"),
+    ]
+
+    jump_test_cases = [
+        # mnemonic, initial_flags, offset, expected_pc, cycles, id
+        pytest.param("_jr_r8", "----", 5, 0x0105, 12, id="JR +5"),
+        pytest.param("_jr_r8", "----", -5, 0x00FB, 12, id="JR -5"),
+        pytest.param("_jr_nz_r8", "0---", 5, 0x0105, 12, id="JR NZ, Z=0, +5"),
+        pytest.param("_jr_nz_r8", "1---", 5, 0x0100, 8, id="JR NZ, Z=1, +5"),
+        pytest.param("_jr_z_r8", "1---", 5, 0x0105, 12, id="JR Z, Z=1, +5"),
+        pytest.param("_jr_z_r8", "0---", 5, 0x0100, 8, id="JR Z, Z=0, +5"),
+        pytest.param("_jr_nc_r8", "---0", 5, 0x0105, 12, id="JR NC, C=0, +5"),
+        pytest.param("_jr_nc_r8", "---1", 5, 0x0100, 8, id="JR NC, C=1, +5"),
+        pytest.param("_jr_c_r8", "---1", 5, 0x0105, 12, id="JR C, C=1, +5"),
+        pytest.param("_jr_c_r8", "---0", 5, 0x0100, 8, id="JR C, C=0, +5"),
+    ]
+
+    ld_r8_r8_test_cases = [
+        # dest_reg, src_reg, initial_src_value, expected_dest_value, id
+        pytest.param("A", "B", 0x12, 0x12, id="LD A, B"),
+        pytest.param("A", "C", 0x34, 0x34, id="LD A, C"),
+        pytest.param("A", "D", 0x56, 0x56, id="LD A, D"),
+        pytest.param("A", "E", 0x78, 0x78, id="LD A, E"),
+        pytest.param("A", "H", 0x9A, 0x9A, id="LD A, H"),
+        pytest.param("A", "L", 0xBC, 0xBC, id="LD A, L"),
+        pytest.param("B", "A", 0xDE, 0xDE, id="LD B, A"),
+        pytest.param("B", "C", 0x12, 0x12, id="LD B, C"),
+        pytest.param("B", "D", 0x34, 0x34, id="LD B, D"),
+        pytest.param("B", "E", 0x56, 0x56, id="LD B, E"),
+        pytest.param("B", "H", 0x78, 0x78, id="LD B, H"),
+        pytest.param("B", "L", 0x9A, 0x9A, id="LD B, L"),
+        pytest.param("C", "A", 0xBC, 0xBC, id="LD C, A"),
+        pytest.param("C", "B", 0xDE, 0xDE, id="LD C, B"),
+        pytest.param("C", "D", 0x12, 0x12, id="LD C, D"),
+        pytest.param("C", "E", 0x34, 0x34, id="LD C, E"),
+        pytest.param("C", "H", 0x56, 0x56, id="LD C, H"),
+        pytest.param("C", "L", 0x78, 0x78, id="LD C, L"),
+        pytest.param("D", "A", 0x9A, 0x9A, id="LD D, A"),
+        pytest.param("D", "B", 0xBC, 0xBC, id="LD D, B"),
+        pytest.param("D", "C", 0xDE, 0xDE, id="LD D, C"),
+        pytest.param("D", "E", 0x12, 0x12, id="LD D, E"),
+        pytest.param("D", "H", 0x34, 0x34, id="LD D, H"),
+        pytest.param("D", "L", 0x56, 0x56, id="LD D, L"),
+        pytest.param("E", "A", 0x78, 0x78, id="LD E, A"),
+        pytest.param("E", "B", 0x9A, 0x9A, id="LD E, B"),
+        pytest.param("E", "C", 0xBC, 0xBC, id="LD E, C"),
+        pytest.param("E", "D", 0xDE, 0xDE, id="LD E, D"),
+        pytest.param("E", "H", 0x12, 0x12, id="LD E, H"),
+        pytest.param("E", "L", 0x34, 0x34, id="LD E, L"),
+        pytest.param("H", "A", 0x56, 0x56, id="LD H, A"),
+        pytest.param("H", "B", 0x78, 0x78, id="LD H, B"),
+        pytest.param("H", "C", 0x9A, 0x9A, id="LD H, C"),
+        pytest.param("H", "D", 0xBC, 0xBC, id="LD H, D"),
+        pytest.param("H", "E", 0xDE, 0xDE, id="LD H, E"),
+        pytest.param("H", "L", 0x12, 0x12, id="LD H, L"),
+        pytest.param("L", "A", 0x34, 0x34, id="LD L, A"),
+        pytest.param("L", "B", 0x56, 0x56, id="LD L, B"),
+        pytest.param("L", "C", 0x78, 0x78, id="LD L, C"),
+        pytest.param("L", "D", 0x9A, 0x9A, id="LD L, D"),
+        pytest.param("L", "E", 0xBC, 0xBC, id="LD L, E"),
+        pytest.param("L", "H", 0xDE, 0xDE, id="LD L, H"),
+        pytest.param("A", "A", 0x12, 0x12, id="LD A, A"),
+        pytest.param("B", "B", 0x34, 0x34, id="LD B, B"),
+        pytest.param("C", "C", 0x56, 0x56, id="LD C, C"),
+        pytest.param("D", "D", 0x78, 0x78, id="LD D, D"),
+        pytest.param("E", "E", 0x9A, 0x9A, id="LD E, E"),
+        pytest.param("H", "H", 0xBC, 0xBC, id="LD H, H"),
+        pytest.param("L", "L", 0xDE, 0xDE, id="LD L, L"),
+    ]
+
+
+    ld_r8_mhl_test_cases = [
+        # dest_reg, initial_hl, initial_mem_value, expected_dest_value, id
+        pytest.param("A", 0xC000, 0x12, 0x12, id="LD A, (HL): Basic"),
+        pytest.param("B", 0xC001, 0x34, 0x34, id="LD B, (HL): Basic"),
+        pytest.param("C", 0xC002, 0x56, 0x56, id="LD C, (HL): Basic"),
+        pytest.param("D", 0xC003, 0x78, 0x78, id="LD D, (HL): Basic"),
+        pytest.param("E", 0xC004, 0x9A, 0x9A, id="LD E, (HL): Basic"),
+        pytest.param("H", 0xC005, 0xBC, 0xBC, id="LD H, (HL): Basic"),
+        pytest.param("L", 0xC006, 0xDE, 0xDE, id="LD L, (HL): Basic"),
+    ]
+
+    ld_mhl_r8_test_cases = [
+        # initial_hl, src_reg, initial_src_value, expected_mem_value, id
+        pytest.param(0xC000, "A", 0x12, 0x12, id="LD (HL), A: Basic"),
+        pytest.param(0xC001, "B", 0x34, 0x34, id="LD (HL), B: Basic"),
+        pytest.param(0xC002, "C", 0x56, 0x56, id="LD (HL), C: Basic"),
+        pytest.param(0xC003, "D", 0x78, 0x78, id="LD (HL), D: Basic"),
+        pytest.param(0xC004, "E", 0x9A, 0x9A, id="LD (HL), E: Basic"),
+        pytest.param(0xC005, "H", 0xBC, 0xBC, id="LD (HL), H: Basic"),
+        pytest.param(0xC006, "L", 0xDE, 0xDE, id="LD (HL), L: Basic"),
     ]
 
     #==========================================
@@ -475,7 +566,7 @@ class TestOpCodes:
         elif "_de" in method_name:
             cpu.CoreWords.DE = register_value
             # operand_address = cpu.CoreWords.DE
-        elif "_hl" in method_name:
+        elif "hl_hl" in method_name: # Check for unique method of add_hl_hl
             cpu.CoreWords.HL = register_value
             # operand_address = cpu.CoreWords.HL
         elif "_sp" in method_name:
@@ -594,6 +685,105 @@ class TestOpCodes:
             assert cpu.CoreWords.HL == mem_addr - 1, "HL- post-decrement failed"
         else:
             assert cpu.CoreWords.HL == initial_hl, "HL should not be modified"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None"
+
+    @pytest.mark.parametrize("mnemonic, initial_flags, offset, expected_pc, cycles", jump_test_cases)
+    def test_jump_routines(self, cpu, mnemonic, initial_flags, offset, expected_pc, cycles):
+        """Tests relative jump routines"""
+        # Arrange
+        cpu.CoreWords.PC = 0x0100  # Initial PC value
+
+        # Set initial flag values based on the initial_flags string
+        if initial_flags[0] != "-":
+            cpu.Flags.z = int(initial_flags[0])
+        if initial_flags[1] != "-":
+            cpu.Flags.n = int(initial_flags[1])
+        if initial_flags[2] != "-":
+            cpu.Flags.h = int(initial_flags[2])
+        if initial_flags[3] != "-":
+            cpu.Flags.c = int(initial_flags[3])
+
+        instruction_method = getattr(cpu, mnemonic)
+        operand_address = np.int8(offset)
+
+        # Act
+        pc_override, cycle_override = instruction_method(operand_address)
+
+        # Assert
+        assert cpu.CoreWords.PC == expected_pc, f"PC expected {expected_pc:04X}, got {cpu.CoreWords.PC:04X}"
+        assert cycle_override == cycles, f"Cycles expected {cycles}, got {cycle_override}"
+        assert pc_override is None, "PC override should be None"
+
+    @pytest.mark.parametrize("dest_reg, src_reg, initial_src_value, expected_dest_value", ld_r8_r8_test_cases)
+    def test_ld_r8_r8(self, cpu, dest_reg, src_reg, initial_src_value, expected_dest_value):
+        """Tests 8-bit register load methods (_ld_X_Y)"""
+        # Arrange
+        setattr(cpu.CoreReg, src_reg, initial_src_value)
+        initial_flags = cpu.Flags.F  # Save initial flag state
+
+        method_name = f"_ld_{dest_reg.lower()}_{src_reg.lower()}"
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        pc_override, cycle_override = instruction_method(None)
+
+        # Assert
+        final_dest_value = getattr(cpu.CoreReg, dest_reg)
+        assert final_dest_value == expected_dest_value, f"Reg {dest_reg} expected {expected_dest_value:02X}, got {final_dest_value:02X}"
+
+        final_flags = cpu.Flags.F  # Get final flag state
+        assert final_flags == initial_flags, f"Flags changed unexpectedly ({initial_flags:02X} -> {final_flags:02X})"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None"
+
+    @pytest.mark.parametrize("dest_reg, initial_hl, initial_mem_value, expected_dest_value", ld_r8_mhl_test_cases)
+    def test_ld_r8_mhl(self, cpu, dest_reg, initial_hl, initial_mem_value, expected_dest_value):
+        """Tests load register from memory at HL (_ld_X_mhl)"""
+        # Arrange
+        cpu.CoreWords.HL = initial_hl
+        cpu.Memory.writeByte(initial_mem_value, initial_hl)
+        initial_flags = cpu.Flags.F  # Save initial flag state
+
+        method_name = f"_ld_{dest_reg.lower()}_mhl"
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        pc_override, cycle_override = instruction_method(None)
+
+        # Assert
+        final_dest_value = getattr(cpu.CoreReg, dest_reg)
+        assert final_dest_value == expected_dest_value, f"Reg {dest_reg} expected {expected_dest_value:02X}, got {final_dest_value:02X}"
+
+        final_flags = cpu.Flags.F  # Get final flag state
+        assert final_flags == initial_flags, f"Flags changed unexpectedly ({initial_flags:02X} -> {final_flags:02X})"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None"
+
+    @pytest.mark.parametrize("initial_hl, src_reg, initial_src_value, expected_mem_value", ld_mhl_r8_test_cases)
+    def test_ld_mhl_r8(self, cpu, initial_hl, src_reg, initial_src_value, expected_mem_value):
+        """Tests load memory at HL from register (_ld_mhl_X)"""
+        # Arrange
+        cpu.CoreWords.HL = initial_hl
+        setattr(cpu.CoreReg, src_reg, initial_src_value)
+        cpu.Memory.writeByte(0x00, initial_hl)  # Initialize memory location
+        initial_flags = cpu.Flags.F  # Save initial flag state
+
+        method_name = f"_ld_mhl_{src_reg.lower()}"
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        pc_override, cycle_override = instruction_method(None)
+
+        # Assert
+        memory_value = cpu.Memory.readByte(initial_hl)
+        assert memory_value == expected_mem_value, f"Memory at {initial_hl:04X} expected {expected_mem_value:02X}, got {memory_value:02X}"
+
+        final_flags = cpu.Flags.F  # Get final flag state
+        assert final_flags == initial_flags, f"Flags changed unexpectedly ({initial_flags:02X} -> {final_flags:02X})"
 
         assert pc_override is None, "PC override should be None"
         assert cycle_override is None, "Cycle override should be None"

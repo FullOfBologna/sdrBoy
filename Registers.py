@@ -206,7 +206,7 @@ class RegWord(SingletonBase):
     # TODO: Need to determine whether carry/wrap around needs to be handled
     @PC.setter
     def PC(self,value:Word):
-        self._PC += value
+        self._PC = value
 
     def PC_Reset(self, value:Word = None):
         self._PC = 0

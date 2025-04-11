@@ -287,6 +287,105 @@ class TestOpCodes:
         pytest.param(0xC006, "L", 0xDE, 0xDE, id="LD (HL), L: Basic"),
     ]
 
+    add_a_r8_test_cases = [
+        # initial_a, r8_value, initial_flags, expected_a, expected_flags, id
+        pytest.param(0x05, 0x0A, "0000", 0x0F, "0000", id="ADD A, r8: Basic"),
+        pytest.param(0x3A, 0xC6, "0000", 0x00, "1010", id="ADD A, r8: Carry and half-carry"),
+        pytest.param(0x3C, 0x04, "0000", 0x40, "0010", id="ADD A, r8: Half-carry"),
+        pytest.param(0x80, 0x80, "0000", 0x00, "1001", id="ADD A, r8: Carry"),
+        pytest.param(0xFF, 0x01, "0000", 0x00, "1010", id="ADD A, r8: Wrap-around"),
+    ]
+
+    adc_a_r8_test_cases = [
+        # initial_a, r8_value, initial_flags, expected_a, expected_flags, id
+        pytest.param(0x05, 0x0A, "0000", 0x0F, "0000", id="ADC A, r8: Basic, no carry"),
+        pytest.param(0x05, 0x0A, "0001", 0x10, "0000", id="ADC A, r8: Basic, with carry"),
+        pytest.param(0x3A, 0xC6, "0001", 0x01, "0011", id="ADC A, r8: Carry and half-carry, with carry"),
+        pytest.param(0x3C, 0x04, "0001", 0x41, "0010", id="ADC A, r8: Half-carry, with carry"),
+        pytest.param(0x80, 0x80, "0001", 0x01, "0001", id="ADC A, r8: Carry, with carry"),
+        pytest.param(0xFF, 0x00, "0001", 0x00, "1011", id="ADC A, r8: Wrap-around, with carry"),
+    ]
+
+    sub_a_r8_test_cases = [
+        # initial_a, r8_value, initial_flags, expected_a, expected_flags, id
+        pytest.param(0x0F, 0x0A, "0000", 0x05, "0100", id="SUB A, r8: Basic"),
+        pytest.param(0x00, 0x01, "0000", 0xFF, "0111", id="SUB A, r8: Borrow"),
+        pytest.param(0x3C, 0x0F, "0000", 0x2D, "0100", id="SUB A, r8: No borrow"),
+        pytest.param(0x10, 0x08, "0000", 0x08, "0100", id="SUB A, r8: No half-borrow"),
+        pytest.param(0x3A, 0x2F, "0000", 0x0B, "0100", id="SUB A, r8: No carry or half-carry"),
+    ]
+
+    sbc_a_r8_test_cases = [
+        # initial_a, r8_value, initial_flags, expected_a, expected_flags, id
+        pytest.param(0x0F, 0x0A, "0000", 0x05, "0100", id="SBC A, r8: Basic, no carry"),
+        pytest.param(0x0F, 0x0A, "0001", 0x04, "0100", id="SBC A, r8: Basic, with carry"),
+        pytest.param(0x00, 0x01, "0001", 0xFE, "0111", id="SBC A, r8: Borrow, with carry"),
+        pytest.param(0x3C, 0x0F, "0001", 0x2C, "0100", id="SBC A, r8: No borrow, with carry"),
+        pytest.param(0x10, 0x08, "0001", 0x07, "0100", id="SBC A, r8: No half-borrow, with carry"),
+        pytest.param(0x3A, 0x2F, "0001", 0x0A, "0100", id="SBC A, r8: No carry or half-carry, with carry"),
+    ]
+
+    and_a_r8_test_cases = [
+        # initial_a, r8_value, expected_a, expected_flags, id
+        pytest.param(0x55, 0x33, 0x11, "0010", id="AND A, r8: Basic"),
+        pytest.param(0xFF, 0x00, 0x00, "1010", id="AND A, r8: Zero result"),
+        pytest.param(0x0F, 0xF0, 0x00, "1010", id="AND A, r8: Zero result 2"),
+        pytest.param(0xA5, 0xA5, 0xA5, "0010", id="AND A, r8: Same value"),
+        pytest.param(0x00, 0xFF, 0x00, "1010", id="AND A, r8: A is zero"),
+    ]
+
+# ... existing test cases ...
+
+    # Combined Arithmetic Test Cases (ADD, ADC, SUB, SBC)
+    # Format: op_type, source_type, initial_a, value, initial_flags, expected_a, expected_flags, id
+    arithmetic_a_test_cases = [
+        # --- ADD ---
+        pytest.param("add", "r8", 0x05, 0x0A, "0000", 0x0F, "0000", id="ADD A, r8: Basic"),
+        pytest.param("add", "r8", 0x3A, 0xC6, "0000", 0x00, "1011", id="ADD A, r8: Carry and half-carry"),
+        pytest.param("add", "r8", 0x3C, 0x04, "0000", 0x40, "0010", id="ADD A, r8: Half-carry"),
+        pytest.param("add", "r8", 0x80, 0x80, "0000", 0x00, "1001", id="ADD A, r8: Carry"),
+        pytest.param("add", "r8", 0xFF, 0x01, "0000", 0x00, "1011", id="ADD A, r8: Wrap-around"),
+        pytest.param("add", "mhl", 0x05, 0x0A, "0000", 0x0F, "0000", id="ADD A, (HL): Basic"),
+        pytest.param("add", "mhl", 0x3A, 0xC6, "0000", 0x00, "1011", id="ADD A, (HL): Carry and half-carry"),
+        pytest.param("add", "d8", 0x05, 0x0A, "0000", 0x0F, "0000", id="ADD A, d8: Basic"),
+        pytest.param("add", "d8", 0xFF, 0x01, "0000", 0x00, "1011", id="ADD A, d8: Wrap-around"),
+
+        # --- ADC ---
+        pytest.param("adc", "r8", 0x05, 0x0A, "0000", 0x0F, "0000", id="ADC A, r8: Basic, no carry"),
+        pytest.param("adc", "r8", 0x05, 0x0A, "0001", 0x10, "0010", id="ADC A, r8: Basic, with carry"),
+        pytest.param("adc", "r8", 0x3A, 0xC6, "0001", 0x01, "0011", id="ADC A, r8: Carry and half-carry, with carry"), # Corrected expected flags
+        pytest.param("adc", "r8", 0x3C, 0x04, "0001", 0x41, "0010", id="ADC A, r8: Half-carry, with carry"),
+        pytest.param("adc", "r8", 0x80, 0x80, "0001", 0x01, "0001", id="ADC A, r8: Carry, with carry"), # Corrected expected flags
+        pytest.param("adc", "r8", 0xFF, 0x00, "0001", 0x00, "1011", id="ADC A, r8: Wrap-around, with carry"),
+        pytest.param("adc", "mhl", 0x05, 0x0A, "0001", 0x10, "0010", id="ADC A, (HL): Basic, with carry"),
+        pytest.param("adc", "mhl", 0x3A, 0xC6, "0001", 0x01, "0011", id="ADC A, (HL): Carry and half-carry, with carry"), # Corrected expected flags
+        pytest.param("adc", "d8", 0x05, 0x0A, "0001", 0x10, "0010", id="ADC A, d8: Basic, with carry"),
+        pytest.param("adc", "d8", 0xFF, 0x00, "0001", 0x00, "1011", id="ADC A, d8: Wrap-around, with carry"),
+
+        # --- SUB ---
+        pytest.param("sub", "r8", 0x0F, 0x0A, "0000", 0x05, "0100", id="SUB A, r8: Basic"),
+        pytest.param("sub", "r8", 0x00, 0x01, "0000", 0xFF, "0111", id="SUB A, r8: Borrow"),
+        pytest.param("sub", "r8", 0x3C, 0x0F, "0000", 0x2D, "0110", id="SUB A, r8: Half Borrow"), # Corrected expected flags
+        # pytest.param("sub", "r8", 0x10, 0x08, "0000", 0x08, "0100", id="SUB A, r8: No half-borrow"),
+        pytest.param("sub", "r8", 0x3A, 0x2F, "0000", 0x0B, "0110", id="SUB A, r8: Half Borrow 2"), # Corrected expected flags
+        pytest.param("sub", "mhl", 0x0F, 0x0A, "0000", 0x05, "0100", id="SUB A, (HL): Basic"),
+        pytest.param("sub", "mhl", 0x00, 0x01, "0000", 0xFF, "0111", id="SUB A, (HL): Borrow"),
+        pytest.param("sub", "d8", 0x0F, 0x0A, "0000", 0x05, "0100", id="SUB A, d8: Basic"),
+        pytest.param("sub", "d8", 0x00, 0x01, "0000", 0xFF, "0111", id="SUB A, d8: Borrow"),
+
+        # --- SBC ---
+        pytest.param("sbc", "r8", 0x0F, 0x0A, "0000", 0x05, "0100", id="SBC A, r8: Basic, no carry"),
+        pytest.param("sbc", "r8", 0x0F, 0x0A, "0001", 0x04, "0100", id="SBC A, r8: Basic, with carry"),
+        pytest.param("sbc", "r8", 0x00, 0x01, "0001", 0xFE, "0111", id="SBC A, r8: Borrow, with carry"),
+        pytest.param("sbc", "r8", 0x3C, 0x0F, "0001", 0x2C, "0110", id="SBC A, r8: Half Borrow, with carry"), # Corrected expected flags
+        pytest.param("sbc", "r8", 0x10, 0x08, "0001", 0x07, "0110", id="SBC A, r8: Half Borrow 2, with carry"), # Corrected expected flags
+        pytest.param("sbc", "r8", 0x3A, 0x2F, "0001", 0x0A, "0110", id="SBC A, r8: Half Borrow 3, with carry"), # Corrected expected flags
+        pytest.param("sbc", "mhl", 0x0F, 0x0A, "0001", 0x04, "0100", id="SBC A, (HL): Basic, with carry"),
+        pytest.param("sbc", "mhl", 0x00, 0x01, "0001", 0xFE, "0111", id="SBC A, (HL): Borrow, with carry"),
+        pytest.param("sbc", "d8", 0x0F, 0x0A, "0001", 0x04, "0100", id="SBC A, d8: Basic, with carry"),
+        pytest.param("sbc", "d8", 0x00, 0x01, "0001", 0xFE, "0111", id="SBC A, d8: Borrow, with carry"),
+    ]
+
     #==========================================
     #           TEST IMPLEMENTATIONS          
     #==========================================
@@ -784,6 +883,72 @@ class TestOpCodes:
 
         final_flags = cpu.Flags.F  # Get final flag state
         assert final_flags == initial_flags, f"Flags changed unexpectedly ({initial_flags:02X} -> {final_flags:02X})"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None"
+
+    @pytest.mark.parametrize("initial_a, r8_value, expected_a, expected_flags", and_a_r8_test_cases)
+    def test_and_a_r8(self, cpu, initial_a, r8_value, expected_a, expected_flags):
+        """Tests AND A, r8 instructions"""
+        # Arrange
+        cpu.CoreReg.A = initial_a
+        cpu.CoreReg.B = r8_value  # Use B as the source register for testing
+        cpu.Flags.z = 0  # Initialize Z to opposite of expected
+        cpu.Flags.n = 1  # Initialize N to opposite of expected
+        cpu.Flags.h = 0  # Initialize H to opposite of expected
+        cpu.Flags.c = 1  # Initialize C to opposite of expected
+
+        # Act
+        pc_override, cycle_override = cpu._and_a_b(None)
+
+        # Assert
+        assert cpu.CoreReg.A == expected_a, f"A register expected {expected_a:02X}, got {cpu.CoreReg.A:02X}"
+        assert cpu.Flags.z == int(expected_flags[0]), "Z flag mismatch"
+        assert cpu.Flags.n == int(expected_flags[1]), "N flag mismatch"
+        assert cpu.Flags.h == int(expected_flags[2]), "H flag mismatch"
+        assert cpu.Flags.c == int(expected_flags[3]), "C flag mismatch"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None"
+
+    @pytest.mark.parametrize("op_type, source_type, initial_a, value, initial_flags, expected_a, expected_flags", arithmetic_a_test_cases)
+    def test_arithmetic_a(self, cpu, op_type, source_type, initial_a, value, initial_flags, expected_a, expected_flags):
+        """Tests ADD A, ADC A, SUB A, SBC A instructions for r8, (HL), and d8 sources."""
+        # Arrange
+        cpu.CoreReg.A = initial_a
+        cpu.Flags.z = int(initial_flags[0])
+        cpu.Flags.n = int(initial_flags[1])
+        cpu.Flags.h = int(initial_flags[2])
+        cpu.Flags.c = int(initial_flags[3])
+
+        operand = None
+        mem_addr = 0xC050 # Default memory address for (HL) and d8
+
+        if source_type == 'r8':
+            cpu.CoreReg.B = value # Use B as the representative r8 source
+            method_name = f"_{op_type}_a_b"
+        elif source_type == 'mhl':
+            cpu.CoreWords.HL = mem_addr
+            cpu.Memory.writeByte(value, mem_addr)
+            method_name = f"_{op_type}_a_mhl"
+        elif source_type == 'd8':
+            cpu.Memory.writeByte(value, mem_addr) # Simulate fetching d8 from this address
+            operand = mem_addr
+            method_name = f"_{op_type}_a_d8"
+        else:
+            pytest.fail(f"Invalid source_type: {source_type}")
+
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        pc_override, cycle_override = instruction_method(operand) # Pass operand address for d8
+
+        # Assert
+        assert cpu.CoreReg.A == expected_a, f"A register expected {expected_a:02X}, got {cpu.CoreReg.A:02X}"
+        assert cpu.Flags.z == int(expected_flags[0]), "Z flag mismatch"
+        assert cpu.Flags.n == int(expected_flags[1]), "N flag mismatch"
+        assert cpu.Flags.h == int(expected_flags[2]), "H flag mismatch"
+        assert cpu.Flags.c == int(expected_flags[3]), "C flag mismatch"
 
         assert pc_override is None, "PC override should be None"
         assert cycle_override is None, "Cycle override should be None"

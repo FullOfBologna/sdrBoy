@@ -181,59 +181,62 @@ class CPU(SingletonBase):
             0x7C: (self._ld_a_h,        1,[ 4],       "----"),
             0x7D: (self._ld_a_l,        1,[ 4],       "----"),
             0x7F: (self._ld_a_a,        1,[ 4],       "----"),
-            0x46: (self._ld_b_mhl,       1,[ 8],       "----"),
-            0x4E: (self._ld_c_mhl,       1,[ 8],       "----"),
-            0x56: (self._ld_d_mhl,       1,[ 8],       "----"),
-            0x5E: (self._ld_e_mhl,       1,[ 8],       "----"),
-            0x66: (self._ld_h_mhl,       1,[ 8],       "----"),
-            0x6E: (self._ld_l_mhl,       1,[ 8],       "----"),
-            0x70: (self._ld_mhl_b,       1,[ 8],       "----"),
-            0x71: (self._ld_mhl_c,       1,[ 8],       "----"),
-            0x72: (self._ld_mhl_d,       1,[ 8],       "----"),
-            0x73: (self._ld_mhl_e,       1,[ 8],       "----"),
-            0x74: (self._ld_mhl_h,       1,[ 8],       "----"),
-            0x75: (self._ld_mhl_l,       1,[ 8],       "----"),
+            0x46: (self._ld_b_mhl,      1,[ 8],       "----"),
+            0x4E: (self._ld_c_mhl,      1,[ 8],       "----"),
+            0x56: (self._ld_d_mhl,      1,[ 8],       "----"),
+            0x5E: (self._ld_e_mhl,      1,[ 8],       "----"),
+            0x66: (self._ld_h_mhl,      1,[ 8],       "----"),
+            0x6E: (self._ld_l_mhl,      1,[ 8],       "----"),
+            0x70: (self._ld_mhl_b,      1,[ 8],       "----"),
+            0x71: (self._ld_mhl_c,      1,[ 8],       "----"),
+            0x72: (self._ld_mhl_d,      1,[ 8],       "----"),
+            0x73: (self._ld_mhl_e,      1,[ 8],       "----"),
+            0x74: (self._ld_mhl_h,      1,[ 8],       "----"),
+            0x75: (self._ld_mhl_l,      1,[ 8],       "----"),
             # 0x76: (self._halt,          1,[ 4],       "----"),
-            # 0x80: (self._add_a_b,       1,[ 4],       "Z0HC"),
-            # 0x81: (self._add_a_c,       1,[ 4],       "Z0HC"),
-            # 0x82: (self._add_a_d,       1,[ 4],       "Z0HC"),
-            # 0x83: (self._add_a_e,       1,[ 4],       "Z0HC"),
-            # 0x84: (self._add_a_h,       1,[ 4],       "Z0HC"),
-            # 0x85: (self._add_a_l,       1,[ 4],       "Z0HC"),
-            # 0x86: (self._add_a_hl,      1,[ 8],       "Z0HC"),
-            # 0x87: (self._add_a_a,       1,[ 4],       "Z0HC"),
-            # 0x88: (self._adc_a_b,       1,[ 4],       "Z0HC"),
-            # 0x89: (self._adc_a_c,       1,[ 4],       "Z0HC"),
-            # 0x8A: (self._adc_a_d,       1,[ 4],       "Z0HC"),
-            # 0x8B: (self._adc_a_e,       1,[ 4],       "Z0HC"),
-            # 0x8C: (self._adc_a_h,       1,[ 4],       "Z0HC"),
-            # 0x8D: (self._adc_a_l,       1,[ 4],       "Z0HC"),
-            # 0x8E: (self._adc_a_hl,      1,[ 8],       "Z0HC"),
-            # 0x8F: (self._adc_a_a,       1,[ 4],       "Z0HC"),
-            # 0x90: (self._sub_b,         1,[ 4],       "Z1HC"),
-            # 0x91: (self._sub_c,         1,[ 4],       "Z1HC"),
-            # 0x92: (self._sub_d,         1,[ 4],       "Z1HC"),
-            # 0x93: (self._sub_e,         1,[ 4],       "Z1HC"),
-            # 0x94: (self._sub_h,         1,[ 4],       "Z1HC"),
-            # 0x95: (self._sub_l,         1,[ 4],       "Z1HC"),
-            # 0x96: (self._sub_hl,        1,[ 8],       "Z1HC"),
-            # 0x97: (self._sub_a,         1,[ 4],       "Z1HC"),
-            # 0x98: (self._sbc_a_b,       1,[ 4],       "Z1HC"),
-            # 0x99: (self._sbc_a_c,       1,[ 4],       "Z1HC"),
-            # 0x9A: (self._sbc_a_d,       1,[ 4],       "Z1HC"),
-            # 0x9B: (self._sbc_a_e,       1,[ 4],       "Z1HC"),
-            # 0x9C: (self._sbc_a_h,       1,[ 4],       "Z1HC"),
-            # 0x9D: (self._sbc_a_l,       1,[ 4],       "Z1HC"),
-            # 0x9E: (self._sbc_a_hl,      1,[ 8],       "Z1HC"),
-            # 0x9F: (self._sbc_a_a,       1,[ 4],       "Z1HC"),
-            # 0xA0: (self._and_b,         1,[ 4],       "Z010"),
-            # 0xA1: (self._and_c,         1,[ 4],       "Z010"),
-            # 0xA2: (self._and_d,         1,[ 4],       "Z010"),
-            # 0xA3: (self._and_e,         1,[ 4],       "Z010"),
-            # 0xA4: (self._and_h,         1,[ 4],       "Z010"),
-            # 0xA5: (self._and_l,         1,[ 4],       "Z010"),
-            # 0xA6: (self._and_hl,        1,[ 8],       "Z010"),
-            # 0xA7: (self._and_a,         1,[ 4],       "Z010"),
+            0x80: (self._add_a_b,       1,[ 4],       "Z0HC"),
+            0x81: (self._add_a_c,       1,[ 4],       "Z0HC"),
+            0x82: (self._add_a_d,       1,[ 4],       "Z0HC"),
+            0x83: (self._add_a_e,       1,[ 4],       "Z0HC"),
+            0x84: (self._add_a_h,       1,[ 4],       "Z0HC"),
+            0x85: (self._add_a_l,       1,[ 4],       "Z0HC"),
+            0x86: (self._add_a_mhl,     1,[ 8],       "Z0HC"),
+            0x87: (self._add_a_a,       1,[ 4],       "Z0HC"),
+            0xC6: (self._add_a_d8,      2,[ 8],       "Z0HC"),
+            0x88: (self._adc_a_b,       1,[ 4],       "Z0HC"),
+            0x89: (self._adc_a_c,       1,[ 4],       "Z0HC"),
+            0x8A: (self._adc_a_d,       1,[ 4],       "Z0HC"),
+            0x8B: (self._adc_a_e,       1,[ 4],       "Z0HC"),
+            0x8C: (self._adc_a_h,       1,[ 4],       "Z0HC"),
+            0x8D: (self._adc_a_l,       1,[ 4],       "Z0HC"),
+            0x8E: (self._adc_a_mhl,     1,[ 8],       "Z0HC"),
+            0x8F: (self._adc_a_a,       1,[ 4],       "Z0HC"),
+            0xCE: (self._adc_a_d8,      2,[ 8],       "Z0HC"),
+            0x90: (self._sub_a_b,       1,[ 4],       "Z1HC"),
+            0x91: (self._sub_a_c,       1,[ 4],       "Z1HC"),
+            0x92: (self._sub_a_d,       1,[ 4],       "Z1HC"),
+            0x93: (self._sub_a_e,       1,[ 4],       "Z1HC"),
+            0x94: (self._sub_a_h,       1,[ 4],       "Z1HC"),
+            0x95: (self._sub_a_l,       1,[ 4],       "Z1HC"),
+            0x96: (self._sub_a_mhl,     1,[ 8],       "Z1HC"),
+            0x97: (self._sub_a_a,       1,[ 4],       "Z1HC"),
+            0x98: (self._sbc_a_b,       1,[ 4],       "Z1HC"),
+            0x99: (self._sbc_a_c,       1,[ 4],       "Z1HC"),
+            0x9A: (self._sbc_a_d,       1,[ 4],       "Z1HC"),
+            0x9B: (self._sbc_a_e,       1,[ 4],       "Z1HC"),
+            0x9C: (self._sbc_a_h,       1,[ 4],       "Z1HC"),
+            0x9D: (self._sbc_a_l,       1,[ 4],       "Z1HC"),
+            0x9E: (self._sbc_a_mhl,     1,[ 8],       "Z1HC"),
+            0x9F: (self._sbc_a_a,       1,[ 4],       "Z1HC"),
+            0xA0: (self._and_a_b,       1,[ 4],       "Z010"),
+            0xA1: (self._and_a_c,       1,[ 4],       "Z010"),
+            0xA2: (self._and_a_d,       1,[ 4],       "Z010"),
+            0xA3: (self._and_a_e,       1,[ 4],       "Z010"),
+            0xA4: (self._and_a_h,       1,[ 4],       "Z010"),
+            0xA5: (self._and_a_l,       1,[ 4],       "Z010"),
+            0xA6: (self._and_a_mhl,     1,[ 8],       "Z010"),
+            0xA7: (self._and_a_a,       1,[ 4],       "Z010"),
+            0xE6: (self._and_a_d8,      2,[8],        "Z010"),
             # 0xA8: (self._xor_b,         1,[ 4],       "Z000"),
             # 0xA9: (self._xor_c,         1,[ 4],       "Z000"),
             # 0xAA: (self._xor_d,         1,[ 4],       "Z000"),
@@ -264,7 +267,6 @@ class CPU(SingletonBase):
             # 0xC3: (self._jp_a16,        3,[16],       "----"),
             # 0xC4: (self._call_nz_a16,   3,[24,12],    "----"),
             # 0xC5: (self._push_bc,       1,[16],       "----"),
-            # 0xC6: (self._add_a_d8,      2,[8],        "Z0HC"),
             # 0xC7: (self._rst_00h,       1,[16],       "----"),
             # 0xC8: (self._ret_z,         1,[20,8],     "----"),
             # 0xC9: (self._ret,           1,[16],       "----"),
@@ -272,7 +274,6 @@ class CPU(SingletonBase):
             # 0xCB: (self.cb_prefix_table),
             # 0xCC: (self._call_z_a16,    3,[24,12],    "----"),
             # 0xCD: (self._call_a16,      3,[24],       "----"),
-            # 0xCE: (self._adc_a_d8,      2,[8],        "Z0HC"),
             # 0xCF: (self._rst_08h,       1,[16],       "----"),
             # 0xD0: (self._ret_nc,        1,[20/8],     "----"),
             # 0xD1: (self._pop_de,        1,[12],       "----"),
@@ -296,7 +297,6 @@ class CPU(SingletonBase):
             # 0xE3: ("N/A"),
             # 0xE4: ("N/A"),
             # 0xE5: (self._push_hl,       1,[16],       "----"),
-            # 0xE6: (self._and_d8,        2,[8],        "Z010"),
             # 0xE7: (self._rst_20h,       1,[16],       "----"),
             # 0xE8: (self._add_sp_r8,     2,[16],       "00HC"),
             # 0xE9: (self._jp_hl,         1,[4],        "----"),
@@ -719,10 +719,22 @@ class CPU(SingletonBase):
 
     # Decimal Adjust Accumulator
     #   Used for adjusting accumulator value to Binary Coded Decimal when desired
-    def _daa(self,operandAddr):
+    def _daa(self, operandAddr):
 
+        adjust = 0
+        if self.Flags.h or (self.CoreReg.A & 0x0F) > 9:
+            adjust |= 0x06  # Add 6 to the lower nibble if half-carry is set or lower nibble > 9
+        if self.Flags.c or self.CoreReg.A > 0x99:
+            adjust |= 0x60  # Add 6 to the upper nibble if carry is set or A > 99
+            self.Flags.c = 1  # Set carry flag if upper nibble adjustment is applied
 
-        pass
+        if self.Flags.n:
+            self.CoreReg.A = (self.CoreReg.A - adjust) & 0xFF  # Subtract adjustment if in subtraction mode
+        else:
+            self.CoreReg.A = (self.CoreReg.A + adjust) & 0xFF  # Add adjustment if in addition mode
+
+        self.Flags.z = 1 if self.CoreReg.A == 0 else 0  # Set zero flag if result is zero
+        self.Flags.h = 0  # Half-carry flag is always cleared after DAA
 
     # load 8 bit register with value of another 8 bit register
     #   r8 <-- r8
@@ -922,3 +934,239 @@ class CPU(SingletonBase):
     def _ld_mhl_l(self,operandAddr):
         self._ld_mhl_r8(self.CoreReg.L)
         return None, None
+    
+
+    def _add_a_r8(self,register):
+        # Add the value of the provided 8 bit register to the accumulator
+        original = self.CoreReg.A
+        result = (self.CoreReg.A + register) & 0xFF
+
+        # Set flags
+        self.Flags.z = 1 if result == 0 else 0
+        self.Flags.n = 0
+        self.Flags.h = 1 if (original & 0x0F) + (register & 0x0F) > 0x0F else 0 # Carry from bit 3 to 4
+        self.Flags.c = 1 if (original + register) > 0xFF else 0
+
+
+        return result
+    
+    def _add_a_a(self,operandAddr):
+        self.CoreReg.A = self._add_a_r8(self.CoreReg.A)
+        return None, None
+    def _add_a_b(self,operandAddr):
+        self.CoreReg.A = self._add_a_r8(self.CoreReg.B)
+        return None, None
+    def _add_a_c(self,operandAddr):
+        self.CoreReg.A = self._add_a_r8(self.CoreReg.C)
+        return None, None
+    def _add_a_d(self,operandAddr):
+        self.CoreReg.A = self._add_a_r8(self.CoreReg.D)
+        return None, None
+    def _add_a_e(self,operandAddr):
+        self.CoreReg.A = self._add_a_r8(self.CoreReg.E)
+        return None, None
+    def _add_a_h(self,operandAddr):
+        self.CoreReg.A = self._add_a_r8(self.CoreReg.H)
+        return None, None
+    def _add_a_l(self,operandAddr):
+        self.CoreReg.A = self._add_a_r8(self.CoreReg.L)
+        return None, None
+    def _add_a_mhl(self,operandAddr):
+        self.CoreReg.A = self._add_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        return None, None
+    def _add_a_d8(self,operandAddr):
+        d8 = self.Memory.readByte(operandAddr)
+        self.CoreReg.A = self._add_a_r8(d8)
+        return None, None
+
+    def _adc_a_r8(self,register):
+        # Add the value of the provided 8 bit register to the accumulator with carry
+        original = self.CoreReg.A
+        result = (self.CoreReg.A + register + self.Flags.c) & 0xFF
+
+        # Set flags
+        self.Flags.z = 1 if result == 0 else 0
+        self.Flags.n = 0
+        self.Flags.h = 1 if (original & 0x0F) + (register & 0x0F) + self.Flags.c > 0x0F else 0 # Carry from bit 3 to 4
+        self.Flags.c = 1 if (original + register + self.Flags.c) > 0xFF else 0
+
+        return result
+    
+    def _adc_a_a(self,operandAddr):
+        self.CoreReg.A = self._adc_a_r8(self.CoreReg.A)
+        return None, None
+    def _adc_a_b(self,operandAddr):
+        self.CoreReg.A = self._adc_a_r8(self.CoreReg.B)
+        return None, None
+    def _adc_a_c(self,operandAddr):
+        self.CoreReg.A = self._adc_a_r8(self.CoreReg.C)
+        return None, None
+    def _adc_a_d(self,operandAddr):
+        self.CoreReg.A = self._adc_a_r8(self.CoreReg.D)
+        return None, None
+    def _adc_a_e(self,operandAddr):
+        self.CoreReg.A = self._adc_a_r8(self.CoreReg.E)
+        return None, None
+    def _adc_a_h(self,operandAddr):
+        self.CoreReg.A = self._adc_a_r8(self.CoreReg.H)
+        return None, None
+    def _adc_a_l(self,operandAddr):
+        self.CoreReg.A = self._adc_a_r8(self.CoreReg.L)
+        return None, None
+    def _adc_a_mhl(self,operandAddr):
+        self.CoreReg.A = self._adc_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        return None, None
+    def _adc_a_d8(self,operandAddr):
+        d8 = self.Memory.readByte(operandAddr)
+        self.CoreReg.A = self._adc_a_r8(d8)
+        return None, None
+    
+
+    def _sub_a_r8(self,register):
+        # Subtract the value of the provided 8 bit register from the accumulator
+        original = self.CoreReg.A
+        result = (self.CoreReg.A - register) & 0xFF
+
+        # Set flags
+        self.Flags.z = 1 if result == 0 else 0
+        self.Flags.n = 1
+        self.Flags.h = 1 if (original & 0x0F) < (register & 0x0F) else 0
+        self.Flags.c = 1 if original < register else 0
+        return result
+    
+    def _sub_a_a(self,operandAddr):
+        self.CoreReg.A = self._sub_a_r8(self.CoreReg.A)
+        return None, None
+    def _sub_a_b(self,operandAddr):
+        self.CoreReg.A = self._sub_a_r8(self.CoreReg.B)
+        return None, None
+    def _sub_a_c(self,operandAddr):
+        self.CoreReg.A = self._sub_a_r8(self.CoreReg.C)
+        return None, None
+    def _sub_a_d(self,operandAddr):
+        self.CoreReg.A = self._sub_a_r8(self.CoreReg.D)
+        return None, None
+    def _sub_a_e(self,operandAddr):
+        self.CoreReg.A = self._sub_a_r8(self.CoreReg.E)
+        return None, None
+    def _sub_a_h(self,operandAddr):
+        self.CoreReg.A = self._sub_a_r8(self.CoreReg.H)
+        return None, None
+    def _sub_a_l(self,operandAddr):
+        self.CoreReg.A = self._sub_a_r8(self.CoreReg.L)
+        return None, None
+    def _sub_a_mhl(self,operandAddr):
+        self.CoreReg.A = self._sub_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        return None, None
+    def _sub_a_d8(self,operandAddr):
+        d8 = self.Memory.readByte(operandAddr)
+        self.CoreReg.A = self._sub_a_r8(d8)
+        return None, None
+    
+    def _sbc_a_r8(self,register):
+        # Subtract the value of the provided 8 bit register from the accumulator with carry
+        original = self.CoreReg.A
+        result = (self.CoreReg.A - register - self.Flags.c) & 0xFF
+
+        # Set flags
+        self.Flags.z = 1 if result == 0 else 0
+        self.Flags.n = 1
+        self.Flags.h = 1 if (original & 0x0F) < (register & 0x0F) else 0
+        self.Flags.c = 1 if original < register else 0
+
+        return result
+    
+    def _sbc_a_a(self,operandAddr):
+        self.CoreReg.A = self._sbc_a_r8(self.CoreReg.A)
+        return None, None
+    def _sbc_a_b(self,operandAddr):
+        self.CoreReg.A = self._sbc_a_r8(self.CoreReg.B)
+        return None, None
+    def _sbc_a_c(self,operandAddr):
+        self.CoreReg.A = self._sbc_a_r8(self.CoreReg.C)
+        return None, None
+    def _sbc_a_d(self,operandAddr):
+        self.CoreReg.A = self._sbc_a_r8(self.CoreReg.D)
+        return None, None
+    def _sbc_a_e(self,operandAddr):
+        self.CoreReg.A = self._sbc_a_r8(self.CoreReg.E)
+        return None, None
+    def _sbc_a_h(self,operandAddr):
+        self.CoreReg.A = self._sbc_a_r8(self.CoreReg.H)
+        return None, None
+    def _sbc_a_l(self,operandAddr):
+        self.CoreReg.A = self._sbc_a_r8(self.CoreReg.L)
+        return None, None
+    def _sbc_a_mhl(self,operandAddr):
+        self.CoreReg.A = self._sbc_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        return None, None
+    def _sbc_a_d8(self,operandAddr):
+        d8 = self.Memory.readByte(operandAddr)
+        self.CoreReg.A = self._sbc_a_r8(d8)
+        return None, None
+    
+    def _and_a_r8(self,register):
+        # AND the value of the provided 8 bit register with the accumulator
+        self.CoreReg.A &= register
+
+        # Set flags
+        self.Flags.z = 1 if self.CoreReg.A == 0 else 0
+        self.Flags.n = 0
+        self.Flags.h = 1
+        self.Flags.c = 0
+
+        return None, None
+    
+    def _and_a_a(self,operandAddr):
+        self._and_a_r8(self.CoreReg.A)
+        return None, None
+    def _and_a_b(self,operandAddr):
+        self._and_a_r8(self.CoreReg.B)
+        return None, None
+    def _and_a_c(self,operandAddr):
+        self._and_a_r8(self.CoreReg.C)
+        return None, None
+    def _and_a_d(self,operandAddr):
+        self._and_a_r8(self.CoreReg.D)
+        return None, None
+    def _and_a_e(self,operandAddr):
+        self._and_a_r8(self.CoreReg.E)
+        return None, None
+    def _and_a_h(self,operandAddr):
+        self._and_a_r8(self.CoreReg.H)
+        return None, None
+    def _and_a_l(self,operandAddr):
+        self._and_a_r8(self.CoreReg.L)
+        return None, None
+    def _and_a_mhl(self,operandAddr):
+        self._and_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        return None, None
+    def _and_a_d8(self,operandAddr):
+        d8 = self.Memory.readByte(operandAddr)
+        self._and_a_r8(d8)
+        return None, None
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1061,3 +1061,5 @@ class TestOpCodes:
 
         assert pc_override is None, "PC override should be None"
         assert cycle_override is None, "Cycle override should be None"
+
+

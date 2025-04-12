@@ -237,39 +237,39 @@ class CPU(SingletonBase):
             0xA6: (self._and_a_mhl,     1,[ 8],       "Z010"),
             0xA7: (self._and_a_a,       1,[ 4],       "Z010"),
             0xE6: (self._and_a_d8,      2,[8],        "Z010"),
-            # 0xA8: (self._xor_b,         1,[ 4],       "Z000"),
-            # 0xA9: (self._xor_c,         1,[ 4],       "Z000"),
-            # 0xAA: (self._xor_d,         1,[ 4],       "Z000"),
-            # 0xAB: (self._xor_e,         1,[ 4],       "Z000"),
-            # 0xAC: (self._xor_h,         1,[ 4],       "Z000"),
-            # 0xAD: (self._xor_l,         1,[ 4],       "Z000"),
-            # 0xAE: (self._xor_hl,        1,[ 8],       "Z000"),
-            # 0xAF: (self._xor_a,         1,[ 4],       "Z000"),
-            # 0xB0: (self._or_b,          1,[ 4],       "Z000"),
-            # 0xB1: (self._or_c,          1,[ 4],       "Z000"),
-            # 0xB2: (self._or_d,          1,[ 4],       "Z000"),
-            # 0xB3: (self._or_e,          1,[ 4],       "Z000"),
-            # 0xB4: (self._or_h,          1,[ 4],       "Z000"),
-            # 0xB5: (self._or_l,          1,[ 4],       "Z000"),
-            # 0xB6: (self._or_hl,         1,[ 8],       "Z000"),
-            # 0xB7: (self._or_a,          1,[ 4],       "Z000"),
-            # 0xB8: (self._cp_b,          1,[ 4],       "Z1HC"),
-            # 0xB9: (self._cp_c,          1,[ 4],       "Z1HC"),
-            # 0xBA: (self._cp_d,          1,[ 4],       "Z1HC"),
-            # 0xBB: (self._cp_e,          1,[ 4],       "Z1HC"),
-            # 0xBC: (self._cp_h,          1,[ 4],       "Z1HC"),
-            # 0xBD: (self._cp_l,          1,[ 4],       "Z1HC"),
-            # 0xBE: (self._cp_hl,         1,[ 8],       "Z1HC"),
-            # 0xBF: (self._cp_a,          1,[ 4],       "Z1HC"),
+            0xA8: (self._xor_a_b,       1,[ 4],       "Z000"),
+            0xA9: (self._xor_a_c,       1,[ 4],       "Z000"),
+            0xAA: (self._xor_a_d,       1,[ 4],       "Z000"),
+            0xAB: (self._xor_a_e,       1,[ 4],       "Z000"),
+            0xAC: (self._xor_a_h,       1,[ 4],       "Z000"),
+            0xAD: (self._xor_a_l,       1,[ 4],       "Z000"),
+            0xAE: (self._xor_a_mhl,     1,[ 8],       "Z000"),
+            0xAF: (self._xor_a_a,       1,[ 4],       "Z000"),
+            0xB0: (self._or_a_b,        1,[ 4],       "Z000"),
+            0xB1: (self._or_a_c,        1,[ 4],       "Z000"),
+            0xB2: (self._or_a_d,        1,[ 4],       "Z000"),
+            0xB3: (self._or_a_e,        1,[ 4],       "Z000"),
+            0xB4: (self._or_a_h,        1,[ 4],       "Z000"),
+            0xB5: (self._or_a_l,        1,[ 4],       "Z000"),
+            0xB6: (self._or_a_mhl,      1,[ 8],       "Z000"),
+            0xB7: (self._or_a_a,        1,[ 4],       "Z000"),
+            0xB8: (self._cp_a_b,        1,[ 4],       "Z1HC"),
+            0xB9: (self._cp_a_c,        1,[ 4],       "Z1HC"),
+            0xBA: (self._cp_a_d,        1,[ 4],       "Z1HC"),
+            0xBB: (self._cp_a_e,        1,[ 4],       "Z1HC"),
+            0xBC: (self._cp_a_h,        1,[ 4],       "Z1HC"),
+            0xBD: (self._cp_a_l,        1,[ 4],       "Z1HC"),
+            0xBE: (self._cp_a_mhl,      1,[ 8],       "Z1HC"),
+            0xBF: (self._cp_a_a,        1,[ 4],       "Z1HC"),
             # 0xC0: (self._ret_nz,        1,[20,8],     "----"),
+            # 0xC8: (self._ret_z,         1,[20,8],     "----"),
+            # 0xC9: (self._ret,           1,[16],       "----"),
             # 0xC1: (self._pop_bc,        1,[12],       "----"),
             # 0xC2: (self._jp_nz_a16,     3,[16,12],    "----"),
             # 0xC3: (self._jp_a16,        3,[16],       "----"),
             # 0xC4: (self._call_nz_a16,   3,[24,12],    "----"),
             # 0xC5: (self._push_bc,       1,[16],       "----"),
             # 0xC7: (self._rst_00h,       1,[16],       "----"),
-            # 0xC8: (self._ret_z,         1,[20,8],     "----"),
-            # 0xC9: (self._ret,           1,[16],       "----"),
             # 0xCA: (self._jp_z_a16,      3,[16,12],    "----"),
             # 0xCB: (self.cb_prefix_table),
             # 0xCC: (self._call_z_a16,    3,[24,12],    "----"),
@@ -1145,6 +1145,130 @@ class CPU(SingletonBase):
         d8 = self.Memory.readByte(operandAddr)
         self._and_a_r8(d8)
         return None, None
+
+    def xor_a_r8(self,register):
+        # XOR the value of the provided 8 bit register with the accumulator
+        self.CoreReg.A ^= register
+
+        # Set flags
+        self.Flags.z = 1 if self.CoreReg.A == 0 else 0
+        self.Flags.n = 0
+        self.Flags.h = 0
+        self.Flags.c = 0
+
+        return None, None
+    
+    def _xor_a_a(self,operandAddr):
+        self.xor_a_r8(self.CoreReg.A)
+        return None, None
+    def _xor_a_b(self,operandAddr):
+        self.xor_a_r8(self.CoreReg.B)
+        return None, None
+    def _xor_a_c(self,operandAddr):
+        self.xor_a_r8(self.CoreReg.C)
+        return None, None
+    def _xor_a_d(self,operandAddr):
+        self.xor_a_r8(self.CoreReg.D)
+        return None, None
+    def _xor_a_e(self,operandAddr):
+        self.xor_a_r8(self.CoreReg.E)
+        return None, None
+    def _xor_a_h(self,operandAddr):
+        self.xor_a_r8(self.CoreReg.H)
+        return None, None
+    def _xor_a_l(self,operandAddr):
+        self.xor_a_r8(self.CoreReg.L)
+        return None, None
+    def _xor_a_mhl(self,operandAddr):
+        self.xor_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        return None, None
+    def _xor_a_d8(self,operandAddr):
+        d8 = self.Memory.readByte(operandAddr)
+        self.xor_a_r8(d8)
+        return None, None
+    
+    def _or_a_r8(self,register):
+        # OR the value of the provided 8 bit register with the accumulator
+        self.CoreReg.A |= register
+
+        # Set flags
+        self.Flags.z = 1 if self.CoreReg.A == 0 else 0
+        self.Flags.n = 0
+        self.Flags.h = 0
+        self.Flags.c = 0
+
+        return None, None
+    def _or_a_a(self,operandAddr):
+        self._or_a_r8(self.CoreReg.A)
+        return None, None
+    def _or_a_b(self,operandAddr):
+        self._or_a_r8(self.CoreReg.B)
+        return None, None
+    def _or_a_c(self,operandAddr):
+        self._or_a_r8(self.CoreReg.C)
+        return None, None
+    def _or_a_d(self,operandAddr):
+        self._or_a_r8(self.CoreReg.D)
+        return None, None
+    def _or_a_e(self,operandAddr):
+        self._or_a_r8(self.CoreReg.E)
+        return None, None
+    def _or_a_h(self,operandAddr):
+        self._or_a_r8(self.CoreReg.H)
+        return None, None
+    def _or_a_l(self,operandAddr):
+        self._or_a_r8(self.CoreReg.L)
+        return None, None
+    def _or_a_mhl(self,operandAddr):
+        self._or_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        return None, None
+    def _or_a_d8(self,operandAddr):
+        d8 = self.Memory.readByte(operandAddr)
+        self._or_a_r8(d8)
+        return None, None
+    
+    def _cp_a_r8(self,register):
+        # Compare the value of the provided 8 bit register with the accumulator
+        original = self.CoreReg.A
+        result = (self.CoreReg.A - register) & 0xFF
+
+        # Set flags
+        self.Flags.z = 1 if result == 0 else 0
+        self.Flags.n = 1
+        self.Flags.h = 1 if (original & 0x0F) < (register & 0x0F) else 0
+        self.Flags.c = 1 if original < register else 0
+
+        return None, None
+
+    def _cp_a_a(self,operandAddr):
+        self._cp_a_r8(self.CoreReg.A)
+        return None, None
+    def _cp_a_b(self,operandAddr):
+        self._cp_a_r8(self.CoreReg.B)
+        return None, None
+    def _cp_a_c(self,operandAddr):
+        self._cp_a_r8(self.CoreReg.C)
+        return None, None
+    def _cp_a_d(self,operandAddr):
+        self._cp_a_r8(self.CoreReg.D)
+        return None, None
+    def _cp_a_e(self,operandAddr):
+        self._cp_a_r8(self.CoreReg.E)
+        return None, None
+    def _cp_a_h(self,operandAddr):
+        self._cp_a_r8(self.CoreReg.H)
+        return None, None
+    def _cp_a_l(self,operandAddr):
+        self._cp_a_r8(self.CoreReg.L)
+        return None, None
+    def _cp_a_mhl(self,operandAddr):
+        self._cp_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        return None, None
+    def _cp_a_d8(self,operandAddr):
+        d8 = self.Memory.readByte(operandAddr)
+        self._cp_a_r8(d8)
+        return None, None
+    
 
 
 

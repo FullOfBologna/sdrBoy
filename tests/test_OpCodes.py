@@ -386,6 +386,40 @@ class TestOpCodes:
         pytest.param("sbc", "d8", 0x00, 0x01, "0001", 0xFE, "0111", id="SBC A, d8: Borrow, with carry"),
     ]
 
+    xor_a_r8_test_cases = [
+        # initial_a, r8_value, expected_a, expected_flags, id
+        pytest.param(0x55, 0x33, 0x66, "0000", id="XOR A, r8: Basic"),
+        pytest.param(0xFF, 0x0F, 0xF0, "0000", id="XOR A, r8: Clear lower nibble"),
+        pytest.param(0xAA, 0xAA, 0x00, "1000", id="XOR A, r8: Zero result (Z=1)"),
+        pytest.param(0x00, 0xFF, 0xFF, "0000", id="XOR A, r8: A is zero"),
+        pytest.param(0xA5, 0x00, 0xA5, "0000", id="XOR A, r8: r8 is zero"),
+        pytest.param(0xFF, 0xFF, 0x00, "1000", id="XOR A, r8: All bits set -> Zero"),
+    ]
+
+    or_a_r8_test_cases = [
+        # initial_a, r8_value, expected_a, expected_flags, id
+        pytest.param(0x55, 0x33, 0x77, "0000", id="OR A, r8: Basic"),
+        pytest.param(0xF0, 0x0F, 0xFF, "0000", id="OR A, r8: Combine nibbles"),
+        pytest.param(0x00, 0x00, 0x00, "1000", id="OR A, r8: Zero result (Z=1)"),
+        pytest.param(0x00, 0xFF, 0xFF, "0000", id="OR A, r8: A is zero"),
+        pytest.param(0xA5, 0x00, 0xA5, "0000", id="OR A, r8: r8 is zero"),
+        pytest.param(0xAA, 0x55, 0xFF, "0000", id="OR A, r8: Complementary bits -> All set"),
+    ]
+
+    cp_a_test_cases = [
+        # initial_a, value, expected_a, expected_flags (ZNHC), id
+        pytest.param(0x3A, 0x3A, 0x3A, "1100", id="CP A, r8: Equal (Z=1)"),
+        pytest.param(0x3A, 0x2F, 0x3A, "0110", id="CP A, r8: Greater, Half Borrow (H=1)"),
+        pytest.param(0x3A, 0x40, 0x3A, "0101", id="CP A, r8: Less (C=1)"),
+        pytest.param(0x00, 0x01, 0x00, "0111", id="CP A, r8: Less, Borrow, Half Borrow (C=1, H=1)"),
+        pytest.param(0xFF, 0x00, 0xFF, "0100", id="CP A, r8: Greater, Max A"),
+        pytest.param(0x00, 0x00, 0x00, "1100", id="CP A, r8: Zero vs Zero (Z=1)"),
+        pytest.param(0x10, 0x08, 0x10, "0110", id="CP A, r8: Half Borrow (H=1)"),
+        pytest.param(0x0F, 0x10, 0x0F, "0101", id="CP A, r8: Less, Borrow (C=1)"),
+        pytest.param(0x55, 0xAA, 0x55, "0101", id="CP A, r8: Less, Borrow (C=1), No Half Borrow"),
+        pytest.param(0xAA, 0x55, 0xAA, "0100", id="CP A, r8: Greater, No Borrow, No Half Borrow"),
+    ]
+
     #==========================================
     #           TEST IMPLEMENTATIONS          
     #==========================================
@@ -862,6 +896,8 @@ class TestOpCodes:
         assert pc_override is None, "PC override should be None"
         assert cycle_override is None, "Cycle override should be None"
 
+# TODO - FIXME - Need to update how HL is accessed in the CPU class to first grab the initial value of HL, then do any manipulations on it
+
     @pytest.mark.parametrize("initial_hl, src_reg, initial_src_value, expected_mem_value", ld_mhl_r8_test_cases)
     def test_ld_mhl_r8(self, cpu, initial_hl, src_reg, initial_src_value, expected_mem_value):
         """Tests load memory at HL from register (_ld_mhl_X)"""
@@ -945,6 +981,79 @@ class TestOpCodes:
 
         # Assert
         assert cpu.CoreReg.A == expected_a, f"A register expected {expected_a:02X}, got {cpu.CoreReg.A:02X}"
+        assert cpu.Flags.z == int(expected_flags[0]), "Z flag mismatch"
+        assert cpu.Flags.n == int(expected_flags[1]), "N flag mismatch"
+        assert cpu.Flags.h == int(expected_flags[2]), "H flag mismatch"
+        assert cpu.Flags.c == int(expected_flags[3]), "C flag mismatch"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None"
+
+
+    @pytest.mark.parametrize("initial_a, r8_value, expected_a, expected_flags", xor_a_r8_test_cases)
+    def test_xor_a_r8(self, cpu, initial_a, r8_value, expected_a, expected_flags):
+        """Tests XOR A, r8 instructions"""
+        # Arrange
+        cpu.CoreReg.A = initial_a
+        cpu.CoreReg.B = r8_value  # Use B as the source register for testing
+        cpu.Flags.z = 0  # Initialize Z to opposite of expected
+        cpu.Flags.n = 1  # Initialize N to opposite of expected
+        cpu.Flags.h = 1  # Initialize H to opposite of expected
+        cpu.Flags.c = 1  # Initialize C to opposite of expected
+
+        # Act
+        pc_override, cycle_override = cpu._xor_a_b(None) # Assuming _xor_a_b calls the core xor_a_r8 logic
+
+        # Assert
+        assert cpu.CoreReg.A == expected_a, f"A register expected {expected_a:02X}, got {cpu.CoreReg.A:02X}"
+        assert cpu.Flags.z == int(expected_flags[0]), "Z flag mismatch"
+        assert cpu.Flags.n == int(expected_flags[1]), "N flag mismatch"
+        assert cpu.Flags.h == int(expected_flags[2]), "H flag mismatch"
+        assert cpu.Flags.c == int(expected_flags[3]), "C flag mismatch"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None"
+
+    @pytest.mark.parametrize("initial_a, r8_value, expected_a, expected_flags", or_a_r8_test_cases)
+    def test_or_a_r8(self, cpu, initial_a, r8_value, expected_a, expected_flags):
+        """Tests OR A, r8 instructions"""
+        # Arrange
+        cpu.CoreReg.A = initial_a
+        cpu.CoreReg.B = r8_value  # Use B as the source register for testing
+        cpu.Flags.z = 0  # Initialize Z to opposite of expected
+        cpu.Flags.n = 1  # Initialize N to opposite of expected
+        cpu.Flags.h = 1  # Initialize H to opposite of expected
+        cpu.Flags.c = 1  # Initialize C to opposite of expected
+
+        # Act
+        pc_override, cycle_override = cpu._or_a_b(None) # Assuming _or_a_b calls the core or_a_r8 logic
+
+        # Assert
+        assert cpu.CoreReg.A == expected_a, f"A register expected {expected_a:02X}, got {cpu.CoreReg.A:02X}"
+        assert cpu.Flags.z == int(expected_flags[0]), "Z flag mismatch"
+        assert cpu.Flags.n == int(expected_flags[1]), "N flag mismatch"
+        assert cpu.Flags.h == int(expected_flags[2]), "H flag mismatch"
+        assert cpu.Flags.c == int(expected_flags[3]), "C flag mismatch"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None"
+
+    @pytest.mark.parametrize("initial_a, value, expected_a, expected_flags", cp_a_test_cases)
+    def test_cp_a(self, cpu, initial_a, value, expected_a, expected_flags):
+        """Tests CP A, r8/d8/(HL) instructions"""
+        # Arrange
+        cpu.CoreReg.A = initial_a
+        cpu.CoreReg.B = value  # Use B as the representative source for r8
+        cpu.Flags.z = 0  # Initialize Z to opposite of expected
+        cpu.Flags.n = 0  # Initialize N to opposite of expected
+        cpu.Flags.h = 0  # Initialize H to opposite of expected
+        cpu.Flags.c = 0  # Initialize C to opposite of expected
+
+        # Act - Test using CP A, B as the representative
+        pc_override, cycle_override = cpu._cp_a_b(None)
+
+        # Assert
+        assert cpu.CoreReg.A == expected_a, f"A register should not change! Expected {expected_a:02X}, got {cpu.CoreReg.A:02X}"
         assert cpu.Flags.z == int(expected_flags[0]), "Z flag mismatch"
         assert cpu.Flags.n == int(expected_flags[1]), "N flag mismatch"
         assert cpu.Flags.h == int(expected_flags[2]), "H flag mismatch"

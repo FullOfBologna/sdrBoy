@@ -201,7 +201,7 @@ class CPU(SingletonBase):
             0x86: (self._add_a_mhl,     1,[ 8],       "Z0HC"),
             0x87: (self._add_a_a,       1,[ 4],       "Z0HC"),
             0xC6: (self._add_a_d8,      2,[ 8],       "Z0HC"),
-            # 0xE8: (self._add_sp_r8,     2,[16],       "00HC"),
+            0xE8: (self._add_sp_r8,     2,[16],       "00HC"),
             0x88: (self._adc_a_b,       1,[ 4],       "Z0HC"),
             0x89: (self._adc_a_c,       1,[ 4],       "Z0HC"),
             0x8A: (self._adc_a_d,       1,[ 4],       "Z0HC"),
@@ -219,7 +219,7 @@ class CPU(SingletonBase):
             0x95: (self._sub_a_l,       1,[ 4],       "Z1HC"),
             0x96: (self._sub_a_mhl,     1,[ 8],       "Z1HC"),
             0x97: (self._sub_a_a,       1,[ 4],       "Z1HC"),
-            # 0xD6: (self._sub_d8,        2,[8],        "Z1HC"),
+            0xD6: (self._sub_a_d8,        2,[8],        "Z1HC"),
             0x98: (self._sbc_a_b,       1,[ 4],       "Z1HC"),
             0x99: (self._sbc_a_c,       1,[ 4],       "Z1HC"),
             0x9A: (self._sbc_a_d,       1,[ 4],       "Z1HC"),
@@ -228,7 +228,7 @@ class CPU(SingletonBase):
             0x9D: (self._sbc_a_l,       1,[ 4],       "Z1HC"),
             0x9E: (self._sbc_a_mhl,     1,[ 8],       "Z1HC"),
             0x9F: (self._sbc_a_a,       1,[ 4],       "Z1HC"),
-            # 0xDE: (self._sbc_a_d8,      2,[8],        "Z1HC"),
+            0xDE: (self._sbc_a_d8,      2,[8],        "Z1HC"),
             0xA0: (self._and_a_b,       1,[ 4],       "Z010"),
             0xA1: (self._and_a_c,       1,[ 4],       "Z010"),
             0xA2: (self._and_a_d,       1,[ 4],       "Z010"),
@@ -246,7 +246,7 @@ class CPU(SingletonBase):
             0xAD: (self._xor_a_l,       1,[ 4],       "Z000"),
             0xAE: (self._xor_a_mhl,     1,[ 8],       "Z000"),
             0xAF: (self._xor_a_a,       1,[ 4],       "Z000"),
-            # 0xEE: (self._xor_a_d8,        2,[8],        "ZOOO"),
+            0xEE: (self._xor_a_d8,        2,[8],        "ZOOO"),
             0xB0: (self._or_a_b,        1,[ 4],       "Z000"),
             0xB1: (self._or_a_c,        1,[ 4],       "Z000"),
             0xB2: (self._or_a_d,        1,[ 4],       "Z000"),
@@ -255,7 +255,7 @@ class CPU(SingletonBase):
             0xB5: (self._or_a_l,        1,[ 4],       "Z000"),
             0xB6: (self._or_a_mhl,      1,[ 8],       "Z000"),
             0xB7: (self._or_a_a,        1,[ 4],       "Z000"),
-            # 0xF6: (self._or_a_d8,         2,[8],        "Z000"),
+            0xF6: (self._or_a_d8,         2,[8],        "Z000"),
             0xB8: (self._cp_a_b,        1,[ 4],       "Z1HC"),
             0xB9: (self._cp_a_c,        1,[ 4],       "Z1HC"),
             0xBA: (self._cp_a_d,        1,[ 4],       "Z1HC"),
@@ -264,13 +264,16 @@ class CPU(SingletonBase):
             0xBD: (self._cp_a_l,        1,[ 4],       "Z1HC"),
             0xBE: (self._cp_a_mhl,      1,[ 8],       "Z1HC"),
             0xBF: (self._cp_a_a,        1,[ 4],       "Z1HC"),
-            # 0xFE: (self._cp_a_d8,         2,[8],        "Z1HC"),
-            # 0xC0: (self._ret_nz,        1,[20,8],     "----"),
-            # 0xC8: (self._ret_z,         1,[20,8],     "----"),
-            # 0xC9: (self._ret,           1,[16],       "----"),
-            # 0xD8: (self._ret_c,         1,[20,8],     "----"),
-            # 0xD0: (self._ret_nc,        1,[20/8],     "----"),
-            # 0xD9: (self._reti,          1,[16],       "----"),
+            0xFE: (self._cp_a_d8,         2,[8],        "Z1HC"),
+            0xCD: (self._call_a16,      3,[24],       "----"),
+            0xC4: (self._call_nz_a16,   3,[24,12],    "----"),
+            0xCC: (self._call_z_a16,    3,[24,12],    "----"),
+            0xDC: (self._call_c_a16,    3,[24,12],    "----"),
+            0xD4: (self._call_nc_a16,   3,[24,12],    "----"),
+            # 0xF5: (self._push_af,       1,[16],       "----"),
+            # 0xC5: (self._push_bc,       1,[16],       "----"),
+            # 0xD5: (self._push_de,       1,[16],       "----"),
+            # 0xE5: (self._push_hl,       1,[16],       "----"),
             # 0xC1: (self._pop_bc,        1,[12],       "----"),
             # 0xD1: (self._pop_de,        1,[12],       "----"),
             # 0xF1: (self._pop_af,        1,[12],       "ZNHC"),
@@ -281,15 +284,12 @@ class CPU(SingletonBase):
             # 0xCA: (self._jp_z_a16,      3,[16,12],    "----"),
             # 0xDA: (self._jp_c_a16,      3,[16,12],    "----"),
             # 0xE9: (self._jp_hl,         1,[4],        "----"),
-            # 0xCD: (self._call_a16,      3,[24],       "----"),
-            # 0xC4: (self._call_nz_a16,   3,[24,12],    "----"),
-            # 0xCC: (self._call_z_a16,    3,[24,12],    "----"),
-            # 0xDC: (self._call_c_a16,    3,[24,12],    "----"),
-            # 0xD4: (self._call_nc_a16,   3,[24,12],    "----"),
-            # 0xF5: (self._push_af,       1,[16],       "----"),
-            # 0xC5: (self._push_bc,       1,[16],       "----"),
-            # 0xD5: (self._push_de,       1,[16],       "----"),
-            # 0xE5: (self._push_hl,       1,[16],       "----"),
+            # 0xC0: (self._ret_nz,        1,[20,8],     "----"),
+            # 0xC8: (self._ret_z,         1,[20,8],     "----"),
+            # 0xC9: (self._ret,           1,[16],       "----"),
+            # 0xD8: (self._ret_c,         1,[20,8],     "----"),
+            # 0xD0: (self._ret_nc,        1,[20/8],     "----"),
+            # 0xD9: (self._reti,          1,[16],       "----"),
             # 0xC7: (self._rst_00h,       1,[16],       "----"),
             # 0xCF: (self._rst_08h,       1,[16],       "----"),
             # 0xD7: (self._rst_10h,       1,[16],       "----"),
@@ -1020,7 +1020,7 @@ class CPU(SingletonBase):
         d8 = self.Memory.readByte(operandAddr)
         self.CoreReg.A = self._adc_a_r8(d8)
         return None, None
-    
+
 
     def _sub_a_r8(self,register):
         # Subtract the value of the provided 8 bit register from the accumulator
@@ -1270,9 +1270,68 @@ class CPU(SingletonBase):
         return None, None
     
 
+    def _add_sp_r8(self,operandAddr):
+        # Add the signed 8-bit value to the stack pointer (SP)
+        signed_value = np.int8(operandAddr)
+        self.CoreWords.SP = (self.CoreWords.SP + signed_value) & 0xFFFF
+
+        # Set flags
+        self.Flags.z = 0
+        self.Flags.n = 0
+        self.Flags.h = 1 if ((self.CoreWords.SP & 0x0F) + (signed_value & 0x0F)) > 0x0F else 0
+        self.Flags.c = 1 if ((self.CoreWords.SP & 0xFF00) + (signed_value & 0xFF00)) > 0xFF else 0
+
+    # STACK MANIPULATION INSTRUCTIONS
+
+    # def _push_a16(self,operandAddr):
 
 
 
+
+    # Helper for pushing return address and jumping
+    def _perform_call(self, target_addr):
+        # Calculate return address (instruction AFTER the 3-byte CALL)
+        return_addr = (self.CoreWords.PC + 3) & 0xFFFF
+        # Decrement SP by 2
+        self.CoreWords.SP = (self.CoreWords.SP - 2) & 0xFFFF
+        # Push return address onto stack (writeWord handles little-endian)
+        self.Memory.writeWord(return_addr, self.CoreWords.SP)
+        # Return the target address as the PC override and cycle count
+        return target_addr, 24
+
+    def _call_a16(self, operandAddr):
+        # operandAddr is PC+1 here. Read the 16-bit target address from memory.
+        target_addr = self.Memory.readWord(operandAddr)
+        return self._perform_call(target_addr)
+
+    def _call_nz_a16(self, operandAddr):
+        if self.Flags.z == 0:
+            target_addr = self.Memory.readWord(operandAddr)
+            return self._perform_call(target_addr)
+        else:
+            # Call not taken, PC advances normally in step(), return cycle override
+            return None, 12
+
+    def _call_z_a16(self, operandAddr):
+        if self.Flags.z == 1:
+            target_addr = self.Memory.readWord(operandAddr)
+            return self._perform_call(target_addr)
+        else:
+            return None, 12
+
+    def _call_nc_a16(self, operandAddr):
+        if self.Flags.c == 0:
+            target_addr = self.Memory.readWord(operandAddr)
+            return self._perform_call(target_addr)
+        else:
+            return None, 12
+
+    def _call_c_a16(self, operandAddr):
+        if self.Flags.c == 1:
+            target_addr = self.Memory.readWord(operandAddr)
+            return self._perform_call(target_addr)
+        else:
+            return None, 12
 
 
 

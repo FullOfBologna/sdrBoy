@@ -421,6 +421,24 @@ class TestOpCodes:
     ]
 
     #==========================================
+    #          STAC MANIPULATIONS TEST CASES
+    #==========================================
+
+    call_test_cases = [
+        # method_name, initial_pc, target_addr, initial_sp, initial_flags, call_taken, expected_pc_override, expected_sp, expected_stack_val, expected_cycles, id
+        pytest.param("_call_a16", 0xC100, 0x2000, 0xFFFE, "----", True, 0x2000, 0xFFFC, 0xC103, 24, id="CALL a16: Basic"), # PC=0xC100, Return=0xC103
+        pytest.param("_call_nz_a16", 0xC100, 0x2000, 0xFFFE, "0---", True,  0x2000, 0xFFFC, 0xC103, 24, id="CALL NZ: Condition Met (Z=0)"),
+        pytest.param("_call_nz_a16", 0xC100, 0x2000, 0xFFFE, "1---", False, None,   0xFFFE, 0x0000, 12, id="CALL NZ: Condition Not Met (Z=1)"),
+        pytest.param("_call_z_a16", 0xC100, 0x2000, 0xFFFE, "1---", True,  0x2000, 0xFFFC, 0xC103, 24, id="CALL Z: Condition Met (Z=1)"),
+        pytest.param("_call_z_a16", 0xC100, 0x2000, 0xFFFE, "0---", False, None,   0xFFFE, 0x0000, 12, id="CALL Z: Condition Not Met (Z=0)"),
+        pytest.param("_call_nc_a16", 0xC100, 0x2000, 0xFFFE, "---0", True,  0x2000, 0xFFFC, 0xC103, 24, id="CALL NC: Condition Met (C=0)"),
+        pytest.param("_call_nc_a16", 0xC100, 0x2000, 0xFFFE, "---1", False, None,   0xFFFE, 0x0000, 12, id="CALL NC: Condition Not Met (C=1)"),
+        pytest.param("_call_c_a16", 0xC100, 0x2000, 0xFFFE, "---1", True,  0x2000, 0xFFFC, 0xC103, 24, id="CALL C: Condition Met (C=1)"),
+        pytest.param("_call_c_a16", 0xC100, 0x2000, 0xFFFE, "---0", False, None,   0xFFFE, 0x0000, 12, id="CALL C: Condition Not Met (C=0)"),
+    ]
+
+
+    #==========================================
     #           TEST IMPLEMENTATIONS          
     #==========================================
 
@@ -1063,3 +1081,43 @@ class TestOpCodes:
         assert cycle_override is None, "Cycle override should be None"
 
 
+    @pytest.mark.parametrize("method_name, initial_pc, target_addr, initial_sp, initial_flags, call_taken, expected_pc_override, expected_sp, expected_stack_val, expected_cycles", call_test_cases)
+    def test_call_instructions(self, cpu, method_name, initial_pc, target_addr, initial_sp, initial_flags, call_taken, expected_pc_override, expected_sp, expected_stack_val, expected_cycles):
+        """Tests CALL instructions (conditional and unconditional)"""
+        # Arrange
+        cpu.CoreWords.PC = initial_pc
+        cpu.CoreWords.SP = initial_sp
+
+        # Set initial flags
+        if initial_flags[0] != '-': cpu.Flags.z = int(initial_flags[0])
+        if initial_flags[1] != '-': cpu.Flags.n = int(initial_flags[1])
+        if initial_flags[2] != '-': cpu.Flags.h = int(initial_flags[2])
+        if initial_flags[3] != '-': cpu.Flags.c = int(initial_flags[3])
+
+        # Write the target address into memory where the instruction expects it (PC+1, PC+2)
+        # writeWord handles little-endian storage
+        operand_addr_in_mem = initial_pc + 1
+        cpu.Memory.writeWord(target_addr, operand_addr_in_mem)
+
+        # Pre-fill stack location to ensure it gets overwritten if call is taken
+        if call_taken:
+            cpu.Memory.writeWord(0x0000, expected_sp) # expected_sp is SP-2
+
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        # Pass the address where the target address *starts* in memory (PC+1)
+        pc_override, cycle_override = instruction_method(operand_addr_in_mem)
+
+        # Assert
+        assert cpu.CoreWords.SP == expected_sp, f"SP expected {expected_sp:04X}, got {cpu.CoreWords.SP:04X}"
+        assert pc_override == expected_pc_override, f"PC override expected {expected_pc_override}, got {pc_override}"
+        assert cycle_override == expected_cycles, f"Cycles expected {expected_cycles}, got {cycle_override}"
+
+        if call_taken:
+            stack_val = cpu.Memory.readWord(expected_sp) # Read the pushed return address
+            assert stack_val == expected_stack_val, f"Stack value at {expected_sp:04X} expected {expected_stack_val:04X}, got {stack_val:04X}"
+        else:
+            # If call not taken, PC should not be overridden by the instruction method itself
+            # (it will be incremented by step() later)
+            assert pc_override is None

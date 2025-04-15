@@ -270,14 +270,14 @@ class CPU(SingletonBase):
             0xCC: (self._call_z_a16,    3,[24,12],    "----"),
             0xDC: (self._call_c_a16,    3,[24,12],    "----"),
             0xD4: (self._call_nc_a16,   3,[24,12],    "----"),
-            # 0xF5: (self._push_af,       1,[16],       "----"),
-            # 0xC5: (self._push_bc,       1,[16],       "----"),
-            # 0xD5: (self._push_de,       1,[16],       "----"),
-            # 0xE5: (self._push_hl,       1,[16],       "----"),
-            # 0xC1: (self._pop_bc,        1,[12],       "----"),
-            # 0xD1: (self._pop_de,        1,[12],       "----"),
-            # 0xF1: (self._pop_af,        1,[12],       "ZNHC"),
-            # 0xE1: (self._pop_hl,        1,[12],       "----"),
+            0xF5: (self._push_af,       1,[16],       "----"),
+            0xC5: (self._push_bc,       1,[16],       "----"),
+            0xD5: (self._push_de,       1,[16],       "----"),
+            0xE5: (self._push_hl,       1,[16],       "----"),
+            0xC1: (self._pop_bc,        1,[12],       "----"),
+            0xD1: (self._pop_de,        1,[12],       "----"),
+            0xF1: (self._pop_af,        1,[12],       "ZNHC"),
+            0xE1: (self._pop_hl,        1,[12],       "----"),
             # 0xC2: (self._jp_nz_a16,     3,[16,12],    "----"),
             # 0xC3: (self._jp_a16,        3,[16],       "----"),
             # 0xD2: (self._jp_nc_a16,     3,[16,12],    "----"),
@@ -1283,10 +1283,70 @@ class CPU(SingletonBase):
 
     # STACK MANIPULATION INSTRUCTIONS
 
-    # def _push_a16(self,operandAddr):
+    # Push to stack memory, data from register pair
+    def _perform_push(self, register_pair):
+        msB = (register_pair >> 8) & 0xFF  # Most significant byte
+        lsB = register_pair & 0xFF
 
+        # TODO: Can I decrement SP by 2, and then write the full register pair word to SP?
+        # Or do I need to decrement by 1, write the first byte, then decrement by 1 again and write the second byte?
+        
+        self.CoreWords.SP = (self.CoreWords.SP - 1) & 0xFFFF
+        self.Memory.writeByte(msB, self.CoreWords.SP)
+        self.CoreWords.SP = (self.CoreWords.SP - 1) & 0xFFFF
+        self.Memory.writeByte(lsB, self.CoreWords.SP)
 
+    def _push_af(self,operandAddr):
+        # Push AF register pair onto stack
+        self._perform_push(self.CoreWords.AF)
+        return None, None
 
+    def _push_bc(self,operandAddr):
+        # Push BC register pair onto stack
+        self._perform_push(self.CoreWords.BC)
+        return None, None
+    
+    def _push_de(self,operandAddr):
+        # Push DE register pair onto stack
+        self._perform_push(self.CoreWords.DE)
+        return None, None
+    
+    def _push_hl(self,operandAddr):
+        # Push HL register pair onto stack
+        self._perform_push(self.CoreWords.HL)
+        return None, None
+    
+    def _perform_pop(self):
+        # Pop two bytes from stack into register pair
+        lsB = self.Memory.readByte(self.CoreWords.SP)
+        self.CoreWords.SP = (self.CoreWords.SP + 1) & 0xFFFF
+        msB = self.Memory.readByte(self.CoreWords.SP)
+        self.CoreWords.SP = (self.CoreWords.SP + 1) & 0xFFFF
+
+        # Combine the two bytes into a single word
+        return (msB << 8) | lsB
+    
+    def _pop_af(self,operandAddr):
+        # Pop stack into AF register pair
+        self.CoreWords.AF = self._perform_pop()
+
+        return None, None
+    
+    def _pop_bc(self,operandAddr):
+        # Pop stack into BC register pair
+        self.CoreWords.BC = self._perform_pop()
+        return None, None
+    
+    def _pop_de(self,operandAddr):
+        # Pop stack into DE register pair
+        self.CoreWords.DE = self._perform_pop()
+        return None, None
+    
+    def _pop_hl(self,operandAddr):
+        # Pop stack into HL register pair
+        self.CoreWords.HL = self._perform_pop()
+        return None, None
+    
 
     # Helper for pushing return address and jumping
     def _perform_call(self, target_addr):

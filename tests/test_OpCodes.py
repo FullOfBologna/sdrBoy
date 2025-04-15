@@ -437,6 +437,27 @@ class TestOpCodes:
         pytest.param("_call_c_a16", 0xC100, 0x2000, 0xFFFE, "---0", False, None,   0xFFFE, 0x0000, 12, id="CALL C: Condition Not Met (C=0)"),
     ]
 
+    push_test_cases = [
+        # reg_pair_name, initial_value, initial_sp, expected_sp, expected_stack_msb, expected_stack_lsb, id
+        pytest.param("AF", 0xABCD, 0xFFFE, 0xFFFC, 0xAB, 0xC0, id="PUSH AF: Basic"), # Note: F lower nibble ignored on POP, but pushed as is
+        pytest.param("BC", 0x1234, 0xFFFE, 0xFFFC, 0x12, 0x34, id="PUSH BC: Basic"),
+        pytest.param("DE", 0x5678, 0xFFFE, 0xFFFC, 0x56, 0x78, id="PUSH DE: Basic"),
+        pytest.param("HL", 0x9ABC, 0xFFFE, 0xFFFC, 0x9A, 0xBC, id="PUSH HL: Basic"),
+        pytest.param("BC", 0x00FF, 0xC002, 0xC000, 0x00, 0xFF, id="PUSH BC: Different SP"),
+        pytest.param("HL", 0xFF00, 0xC002, 0xC000, 0xFF, 0x00, id="PUSH HL: Different SP"),
+    ]
+
+    pop_test_cases = [
+        # reg_pair_name, initial_sp, stack_msb, stack_lsb, expected_value, expected_sp, expected_flags_after (ZNHC), id
+        # Note: For POP AF, expected_value checks A, expected_flags_after checks F (masked)
+        pytest.param("AF", 0xFFFC, 0xAB, 0xCD, 0xAB00, 0xFFFE, "1011", id="POP AF: Basic (F masked)"), # Stack: CD AB -> A=AB, F=C0 (Z=1,N=0,H=1,C=0)
+        pytest.param("BC", 0xFFFC, 0x12, 0x34, 0x1234, 0xFFFE, "----", id="POP BC: Basic"),
+        pytest.param("DE", 0xFFFC, 0x56, 0x78, 0x5678, 0xFFFE, "----", id="POP DE: Basic"),
+        pytest.param("HL", 0xFFFC, 0x9A, 0xBC, 0x9ABC, 0xFFFE, "----", id="POP HL: Basic"),
+        pytest.param("BC", 0xC000, 0x00, 0xFF, 0x00FF, 0xC002, "----", id="POP BC: Different SP"),
+        pytest.param("AF", 0xC000, 0x01, 0x1F, 0x0100, 0xC002, "0001", id="POP AF: F=10 (C=1)"), # Stack: 1F 01 -> A=01, F=10 (Z=0,N=0,H=0,C=1)
+        pytest.param("AF", 0xC000, 0x01, 0x85, 0x0100, 0xC002, "1000", id="POP AF: F=80 (Z=1)"), # Stack: 85 01 -> A=01, F=80 (Z=1,N=0,H=0,C=0)
+    ]
 
     #==========================================
     #           TEST IMPLEMENTATIONS          
@@ -1121,3 +1142,74 @@ class TestOpCodes:
             # If call not taken, PC should not be overridden by the instruction method itself
             # (it will be incremented by step() later)
             assert pc_override is None
+
+
+    @pytest.mark.parametrize("reg_pair_name, initial_value, initial_sp, expected_sp, expected_stack_msb, expected_stack_lsb", push_test_cases)
+    def test_push_instructions(self, cpu, reg_pair_name, initial_value, initial_sp, expected_sp, expected_stack_msb, expected_stack_lsb):
+        """Tests PUSH instructions"""
+        # Arrange
+        cpu.CoreWords.SP = initial_sp
+        setattr(cpu.CoreWords, reg_pair_name, initial_value) # Set initial register value
+
+        # Pre-clear stack locations
+        cpu.Memory.writeByte(0x00, initial_sp - 1)
+        cpu.Memory.writeByte(0x00, initial_sp - 2)
+
+        method_name = f"_push_{reg_pair_name.lower()}"
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        pc_override, cycle_override = instruction_method(None)
+
+        # Assert
+        assert cpu.CoreWords.SP == expected_sp, f"SP expected {expected_sp:04X}, got {cpu.CoreWords.SP:04X}"
+
+        stack_val_msb = cpu.Memory.readByte(expected_sp + 1) # MSB is pushed first to SP-1
+        stack_val_lsb = cpu.Memory.readByte(expected_sp)     # LSB is pushed second to SP-2
+
+        assert stack_val_msb == expected_stack_msb, f"Stack MSB at {expected_sp + 1:04X} expected {expected_stack_msb:02X}, got {stack_val_msb:02X}"
+        assert stack_val_lsb == expected_stack_lsb, f"Stack LSB at {expected_sp:04X} expected {expected_stack_lsb:02X}, got {stack_val_lsb:02X}"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None (uses default 16)" # PUSH is always 16 cycles
+
+    @pytest.mark.parametrize("reg_pair_name, initial_sp, stack_msb, stack_lsb, expected_value, expected_sp, expected_flags_after", pop_test_cases)
+    def test_pop_instructions(self, cpu, reg_pair_name, initial_sp, stack_msb, stack_lsb, expected_value, expected_sp, expected_flags_after):
+        """Tests POP instructions"""
+        # Arrange
+        cpu.CoreWords.SP = initial_sp
+        # Write values to the stack (LSB at SP, MSB at SP+1)
+        cpu.Memory.writeByte(stack_lsb, initial_sp)
+        cpu.Memory.writeByte(stack_msb, initial_sp + 1)
+
+        # Store initial flags if we need to check they weren't changed (for non-AF pops)
+        initial_flags_val = cpu.Flags.F
+
+        method_name = f"_pop_{reg_pair_name.lower()}"
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        pc_override, cycle_override = instruction_method(None)
+
+        # Assert
+        assert cpu.CoreWords.SP == expected_sp, f"SP expected {expected_sp:04X}, got {cpu.CoreWords.SP:04X}"
+
+        if reg_pair_name == "AF":
+            # For POP AF, expected_value holds the expected A * 0x100
+            # We check A and F separately
+            assert cpu.CoreReg.A == (expected_value >> 8), f"Register A expected {(expected_value >> 8):02X}, got {cpu.CoreReg.A:02X}"
+            # Check flags based on expected_flags_after string
+            assert cpu.Flags.z == int(expected_flags_after[0]), "Z flag mismatch after POP AF"
+            assert cpu.Flags.n == int(expected_flags_after[1]), "N flag mismatch after POP AF"
+            assert cpu.Flags.h == int(expected_flags_after[2]), "H flag mismatch after POP AF"
+            assert cpu.Flags.c == int(expected_flags_after[3]), "C flag mismatch after POP AF"
+            # Verify the F register byte itself has lower bits zero
+            assert (cpu.Flags.F & 0x0F) == 0, f"Lower nibble of F should be zero after POP AF, got {cpu.Flags.F:02X}"
+        else:
+            final_value = getattr(cpu.CoreWords, reg_pair_name)
+            assert final_value == expected_value, f"Register {reg_pair_name} expected {expected_value:04X}, got {final_value:04X}"
+            # Check flags unchanged for non-AF pops
+            assert cpu.Flags.F == initial_flags_val, f"Flags changed unexpectedly for POP {reg_pair_name}"
+
+        assert pc_override is None, "PC override should be None"
+        assert cycle_override is None, "Cycle override should be None (uses default 12)" # POP is always 12 cycles

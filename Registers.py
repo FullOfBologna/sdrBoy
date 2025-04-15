@@ -24,7 +24,7 @@ class Flag(SingletonBase):
         self._n = 0
         self._h = 1
         self._c = 1
-        self._flag = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
+        self._flag = Byte(self.z << 7 | self.n << 6 | self.h << 5 | self.c << 4)
         self._initialized = True
     
     def flagReset(self):
@@ -32,7 +32,7 @@ class Flag(SingletonBase):
 
     @property
     def F(self):
-        # self._flag = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
+        self._flag = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
         # print(f"{self.F}")
         return self._flag
 
@@ -42,7 +42,7 @@ class Flag(SingletonBase):
         self.h = (byte & 0x20) >>  5
         self.n = (byte & 0x40) >>  6
         self.z = (byte & 0x80) >>  7
-        self._flag = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
+        self._flag = Byte(self.z << 7 | self.n << 6 | self.h << 5 | self.c << 4)
 
     @property    
     def c(self):
@@ -176,7 +176,8 @@ class RegWord(SingletonBase):
         print(f"Iniitalizing Flag instance {id(self)}")
 
         self.byte = byte
-        self._AF = (self.byte.A << 8) | flag.F # Need to explicitly tell python to access the flags property
+        self.flag = flag
+        self._AF = (self.byte.A << 8) | self.flag.F # Need to explicitly tell python to access the flags property
         self._BC = (self.byte.B << 8) | self.byte.C
         self._DE = (self.byte.D << 8) | self.byte.E
         self._HL = (self.byte.H << 8) | self.byte.L
@@ -219,14 +220,14 @@ class RegWord(SingletonBase):
     # Getter will update the value when it is called, from referencing the underlying core register
     @property    
     def AF(self):
-        self._AF = (self.byte.A << 8) | self.F
+        self._AF = (self.byte.A << 8) | self.flag.F
         return self._AF
     
     @AF.setter
     def AF(self, word : Word):
         self.byte.A = (word & 0xFF00) >> 8
-        self.F = (word & 0xFF)
-        self._AF = (self.byte.A << 8) | self.F
+        self.flag.F = (word & 0xFF)
+        self._AF = (self.byte.A << 8) | self.flag.F
 
     @property    
     def BC(self):

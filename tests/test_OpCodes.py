@@ -459,6 +459,76 @@ class TestOpCodes:
         pytest.param("AF", 0xC000, 0x01, 0x85, 0x0100, 0xC002, "1000", id="POP AF: F=80 (Z=1)"), # Stack: 85 01 -> A=01, F=80 (Z=1,N=0,H=0,C=0)
     ]
 
+    jp_a16_test_cases = [
+        # method_name, initial_pc, target_addr, initial_flags, jump_taken, expected_pc_override, expected_cycles, id
+        # --- Unconditional JP ---
+        pytest.param("_jp_a16", 0xC100, 0x2000, "----", True, 0x2000, 16, id="JP a16: Basic"),
+        pytest.param("_jp_a16", 0xC100, 0x0000, "----", True, 0x0000, 16, id="JP a16: To Zero"),
+        pytest.param("_jp_a16", 0xC100, 0xFFFF, "----", True, 0xFFFF, 16, id="JP a16: To Max"),
+
+        # --- JP NZ ---
+        pytest.param("_jp_nz_a16", 0xC100, 0x2000, "0---", True,  0x2000, 16, id="JP NZ: Condition Met (Z=0)"),
+        pytest.param("_jp_nz_a16", 0xC100, 0x2000, "1---", False, None,   12, id="JP NZ: Condition Not Met (Z=1)"),
+
+        # --- JP Z ---
+        pytest.param("_jp_z_a16", 0xC100, 0x2000, "1---", True,  0x2000, 16, id="JP Z: Condition Met (Z=1)"),
+        pytest.param("_jp_z_a16", 0xC100, 0x2000, "0---", False, None,   12, id="JP Z: Condition Not Met (Z=0)"),
+
+        # --- JP NC ---
+        pytest.param("_jp_nc_a16", 0xC100, 0x2000, "---0", True,  0x2000, 16, id="JP NC: Condition Met (C=0)"),
+        pytest.param("_jp_nc_a16", 0xC100, 0x2000, "---1", False, None,   12, id="JP NC: Condition Not Met (C=1)"),
+
+        # --- JP C ---
+        pytest.param("_jp_c_a16", 0xC100, 0x2000, "---1", True,  0x2000, 16, id="JP C: Condition Met (C=1)"),
+        pytest.param("_jp_c_a16", 0xC100, 0x2000, "---0", False, None,   12, id="JP C: Condition Not Met (C=0)"),
+    ]
+
+    jp_hl_test_cases = [
+        # initial_hl, expected_pc_override, expected_cycles, id
+        pytest.param(0x2000, 0x2000, 4, id="JP HL: Basic"),
+        pytest.param(0x0000, 0x0000, 4, id="JP HL: To Zero"),
+        pytest.param(0xFFFF, 0xFFFF, 4, id="JP HL: To Max"),
+        pytest.param(0xC150, 0xC150, 4, id="JP HL: To WRAM"),
+    ]
+
+    ret_test_cases = [
+        # method_name, initial_sp, stack_ret_addr, initial_flags, ret_taken, expected_pc_override, expected_sp, expected_cycles, id
+        # --- Unconditional RET ---
+        pytest.param("_ret", 0xFFFC, 0xC200, "----", True, 0xC200, 0xFFFE, 16, id="RET: Basic"),
+
+        # --- RET NZ ---
+        pytest.param("_ret_nz", 0xFFFC, 0xC200, "0---", True,  0xC200, 0xFFFE, 20, id="RET NZ: Condition Met (Z=0)"),
+        pytest.param("_ret_nz", 0xFFFC, 0xC200, "1---", False, None,   0xFFFC, 8,  id="RET NZ: Condition Not Met (Z=1)"), # SP unchanged
+
+        # --- RET Z ---
+        pytest.param("_ret_z", 0xFFFC, 0xC200, "1---", True,  0xC200, 0xFFFE, 20, id="RET Z: Condition Met (Z=1)"),
+        pytest.param("_ret_z", 0xFFFC, 0xC200, "0---", False, None,   0xFFFC, 8,  id="RET Z: Condition Not Met (Z=0)"),
+
+        # --- RET NC ---
+        pytest.param("_ret_nc", 0xFFFC, 0xC200, "---0", True,  0xC200, 0xFFFE, 20, id="RET NC: Condition Met (C=0)"),
+        pytest.param("_ret_nc", 0xFFFC, 0xC200, "---1", False, None,   0xFFFC, 8,  id="RET NC: Condition Not Met (C=1)"),
+
+        # --- RET C ---
+        pytest.param("_ret_c", 0xFFFC, 0xC200, "---1", True,  0xC200, 0xFFFE, 20, id="RET C: Condition Met (C=1)"),
+        pytest.param("_ret_c", 0xFFFC, 0xC200, "---0", False, None,   0xFFFC, 8,  id="RET C: Condition Not Met (C=0)"),
+
+        # --- RETI --- (Assuming IME enable is not yet implemented)
+        pytest.param("_reti", 0xFFFC, 0xC200, "----", True, 0xC200, 0xFFFE, 16, id="RETI: Basic (IME not tested)"),
+    ]
+
+    rst_test_cases = [
+        # method_name, initial_pc, initial_sp, expected_pc_override, expected_sp, expected_stack_val, expected_cycles, id
+        pytest.param("_rst_00h", 0xC100, 0xFFFE, 0x0000, 0xFFFC, 0xC101, 16, id="RST 00H"),
+        pytest.param("_rst_08h", 0xC100, 0xFFFE, 0x0008, 0xFFFC, 0xC101, 16, id="RST 08H"),
+        pytest.param("_rst_10h", 0xC100, 0xFFFE, 0x0010, 0xFFFC, 0xC101, 16, id="RST 10H"),
+        pytest.param("_rst_18h", 0xC100, 0xFFFE, 0x0018, 0xFFFC, 0xC101, 16, id="RST 18H"),
+        pytest.param("_rst_20h", 0xC100, 0xFFFE, 0x0020, 0xFFFC, 0xC101, 16, id="RST 20H"),
+        pytest.param("_rst_28h", 0xC100, 0xFFFE, 0x0028, 0xFFFC, 0xC101, 16, id="RST 28H"),
+        pytest.param("_rst_30h", 0xC100, 0xFFFE, 0x0030, 0xFFFC, 0xC101, 16, id="RST 30H"),
+        pytest.param("_rst_38h", 0xC100, 0xFFFE, 0x0038, 0xFFFC, 0xC101, 16, id="RST 38H"),
+        pytest.param("_rst_10h", 0x0150, 0xC002, 0x0010, 0xC000, 0x0151, 16, id="RST 10H: Different PC/SP"), # PC=0x0150 (ROM), SP=0xC002 (WRAM)
+    ]
+
     #==========================================
     #           TEST IMPLEMENTATIONS          
     #==========================================
@@ -1213,3 +1283,103 @@ class TestOpCodes:
 
         assert pc_override is None, "PC override should be None"
         assert cycle_override is None, "Cycle override should be None (uses default 12)" # POP is always 12 cycles
+
+
+    @pytest.mark.parametrize("method_name, initial_pc, target_addr, initial_flags, jump_taken, expected_pc_override, expected_cycles", jp_a16_test_cases)
+    def test_jp_a16_instructions(self, cpu, method_name, initial_pc, target_addr, initial_flags, jump_taken, expected_pc_override, expected_cycles):
+        """Tests JP a16 instructions (conditional and unconditional)"""
+        # Arrange
+        cpu.CoreWords.PC = initial_pc
+
+        # Set initial flags
+        if initial_flags[0] != '-': cpu.Flags.z = int(initial_flags[0])
+        if initial_flags[1] != '-': cpu.Flags.n = int(initial_flags[1])
+        if initial_flags[2] != '-': cpu.Flags.h = int(initial_flags[2])
+        if initial_flags[3] != '-': cpu.Flags.c = int(initial_flags[3])
+
+        # Write the target address into memory where the instruction expects it (PC+1, PC+2)
+        operand_addr_in_mem = initial_pc + 1
+        cpu.Memory.writeWord(target_addr, operand_addr_in_mem)
+
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        # Pass the address where the target address *starts* in memory (PC+1)
+        pc_override, cycle_override = instruction_method(operand_addr_in_mem)
+
+        # Assert
+        assert pc_override == expected_pc_override, f"PC override expected {expected_pc_override}, got {pc_override}"
+        assert cycle_override == expected_cycles, f"Cycles expected {expected_cycles}, got {cycle_override}"
+
+    @pytest.mark.parametrize("initial_hl, expected_pc_override, expected_cycles", jp_hl_test_cases)
+    def test_jp_hl_instruction(self, cpu, initial_hl, expected_pc_override, expected_cycles):
+        """Tests JP HL instruction"""
+        # Arrange
+        cpu.CoreWords.HL = initial_hl
+        cpu.CoreWords.PC = 0xC100 # Set PC to a known state, though it's not directly used by JP HL
+
+        # Act
+        pc_override, cycle_override = cpu._jp_hl(None) # operandAddr is not used by JP HL
+
+        # Assert
+        assert pc_override == expected_pc_override, f"PC override expected {expected_pc_override:04X}, got {pc_override:04X}"
+        assert cycle_override == expected_cycles, f"Cycles expected {expected_cycles}, got {cycle_override}"
+
+
+    @pytest.mark.parametrize("method_name, initial_sp, stack_ret_addr, initial_flags, ret_taken, expected_pc_override, expected_sp, expected_cycles", ret_test_cases)
+    def test_ret_instructions(self, cpu, method_name, initial_sp, stack_ret_addr, initial_flags, ret_taken, expected_pc_override, expected_sp, expected_cycles):
+        """Tests RET instructions (conditional, unconditional, RETI)"""
+        # Arrange
+        cpu.CoreWords.SP = initial_sp
+        cpu.CoreWords.PC = 0xC100 # Set PC to a known state, though it's not directly used by RET
+
+        # Set initial flags
+        if initial_flags[0] != '-': cpu.Flags.z = int(initial_flags[0])
+        if initial_flags[1] != '-': cpu.Flags.n = int(initial_flags[1])
+        if initial_flags[2] != '-': cpu.Flags.h = int(initial_flags[2])
+        if initial_flags[3] != '-': cpu.Flags.c = int(initial_flags[3])
+
+        # Write the return address to the stack where RET expects it
+        # writeWord handles little-endian storage
+        cpu.Memory.writeWord(stack_ret_addr, initial_sp)
+
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        pc_override, cycle_override = instruction_method(None) # operandAddr is not used by RET
+
+        # Assert
+        assert cpu.CoreWords.SP == expected_sp, f"SP expected {expected_sp:04X}, got {cpu.CoreWords.SP:04X}"
+        assert pc_override == expected_pc_override, f"PC override expected {expected_pc_override}, got {pc_override}"
+        assert cycle_override == expected_cycles, f"Cycles expected {expected_cycles}, got {cycle_override}"
+
+        # If RET wasn't taken, ensure the stack wasn't accidentally read/modified
+        if not ret_taken:
+            stack_val_after = cpu.Memory.readWord(initial_sp)
+            assert stack_val_after == stack_ret_addr, f"Stack value at {initial_sp:04X} should be unchanged if RET not taken"
+
+        # TODO: Add check for IME flag being set if/when _reti implements it
+
+    @pytest.mark.parametrize("method_name, initial_pc, initial_sp, expected_pc_override, expected_sp, expected_stack_val, expected_cycles", rst_test_cases)
+    def test_rst_instructions(self, cpu, method_name, initial_pc, initial_sp, expected_pc_override, expected_sp, expected_stack_val, expected_cycles):
+        """Tests RST instructions"""
+        # Arrange
+        cpu.CoreWords.PC = initial_pc
+        cpu.CoreWords.SP = initial_sp
+
+        # Pre-fill stack location to ensure it gets overwritten
+        cpu.Memory.writeWord(0x0000, expected_sp) # expected_sp is initial_sp - 2
+
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        pc_override, cycle_override = instruction_method(None) # operandAddr is not used by RST
+
+        # Assert
+        assert cpu.CoreWords.SP == expected_sp, f"SP expected {expected_sp:04X}, got {cpu.CoreWords.SP:04X}"
+        assert pc_override == expected_pc_override, f"PC override expected {expected_pc_override:04X}, got {pc_override:04X}"
+        assert cycle_override == expected_cycles, f"Cycles expected {expected_cycles}, got {cycle_override}"
+
+        # Check the value pushed onto the stack (return address = PC + 1)
+        stack_val = cpu.Memory.readWord(expected_sp)
+        assert stack_val == expected_stack_val, f"Stack value at {expected_sp:04X} expected {expected_stack_val:04X}, got {stack_val:04X}"

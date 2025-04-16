@@ -278,34 +278,34 @@ class CPU(SingletonBase):
             0xD1: (self._pop_de,        1,[12],       "----"),
             0xF1: (self._pop_af,        1,[12],       "ZNHC"),
             0xE1: (self._pop_hl,        1,[12],       "----"),
-            # 0xC2: (self._jp_nz_a16,     3,[16,12],    "----"),
-            # 0xC3: (self._jp_a16,        3,[16],       "----"),
-            # 0xD2: (self._jp_nc_a16,     3,[16,12],    "----"),
-            # 0xCA: (self._jp_z_a16,      3,[16,12],    "----"),
-            # 0xDA: (self._jp_c_a16,      3,[16,12],    "----"),
-            # 0xE9: (self._jp_hl,         1,[4],        "----"),
-            # 0xC0: (self._ret_nz,        1,[20,8],     "----"),
-            # 0xC8: (self._ret_z,         1,[20,8],     "----"),
-            # 0xC9: (self._ret,           1,[16],       "----"),
-            # 0xD8: (self._ret_c,         1,[20,8],     "----"),
-            # 0xD0: (self._ret_nc,        1,[20/8],     "----"),
-            # 0xD9: (self._reti,          1,[16],       "----"),
-            # 0xC7: (self._rst_00h,       1,[16],       "----"),
-            # 0xCF: (self._rst_08h,       1,[16],       "----"),
-            # 0xD7: (self._rst_10h,       1,[16],       "----"),
-            # 0xDF: (self._rst_18h,       1,[16],       "----"),
-            # 0xE7: (self._rst_20h,       1,[16],       "----"),
-            # 0xEF: (self._rst_28h,       1,[16],       "----"),
-            # 0xF7: (self._rst_30h,       1,[16],       "----"),
-            # 0xFF: (self._rst_38h,       1,[16],       "----"),
-            # 0xF2: (self._ld_a_c,        2,[8],        "----"),
-            # 0xE2: (self._ld_c_a,        2,[8],        "----"),
-            # 0xEA: (self._ld_a16_a,      3,[16],       "----"),
+            0xC2: (self._jp_nz_a16,     3,[16,12],    "----"),
+            0xC3: (self._jp_a16,        3,[16],       "----"),
+            0xD2: (self._jp_nc_a16,     3,[16,12],    "----"),
+            0xCA: (self._jp_z_a16,      3,[16,12],    "----"),
+            0xDA: (self._jp_c_a16,      3,[16,12],    "----"),
+            0xE9: (self._jp_hl,         1,[4],        "----"),
+            0xC0: (self._ret_nz,        1,[20,8],     "----"),
+            0xC8: (self._ret_z,         1,[20,8],     "----"),
+            0xD8: (self._ret_c,         1,[20,8],     "----"),
+            0xD0: (self._ret_nc,        1,[20,8],     "----"),
+            0xC9: (self._ret,           1,[16],       "----"),
+            0xD9: (self._reti,          1,[16],       "----"),
+            0xC7: (self._rst_00h,       1,[16],       "----"),
+            0xCF: (self._rst_08h,       1,[16],       "----"),
+            0xD7: (self._rst_10h,       1,[16],       "----"),
+            0xDF: (self._rst_18h,       1,[16],       "----"),
+            0xE7: (self._rst_20h,       1,[16],       "----"),
+            0xEF: (self._rst_28h,       1,[16],       "----"),
+            0xF7: (self._rst_30h,       1,[16],       "----"),
+            0xFF: (self._rst_38h,       1,[16],       "----"),
+            # 0xF2: (self._ldh_a_mc,        2,[8],        "----"),
+            # 0xE2: (self._ldh_mc_a,        2,[8],        "----"),
+            # 0xE0: (self._ldh_ma8_a,      2,[12],       "----"),
+            # 0xF0: (self._ldh_a_ma8,      2,[12],       "----"),
             # 0xF8: (self._ld_hl_spp_r8,  2,[12],       "00HC"),
             # 0xF9: (self._ld_sp_hl,      1,[8],        "----"),
-            # 0xFA: (self._ld_a_a16,      3,[16],       "----"),
-            # 0xE0: (self._ldh_a8_a,      2,[12],       "----"),
-            # 0xF0: (self._ldh_a_a8,      2,[12],       "----"),
+            # 0xEA: (self._ld_ma16_a,      3,[16],       "----"),
+            # 0xFA: (self._ld_a_ma16,      3,[16],       "----"),
             # 0xF3: (self._di,            1,[4],        "----"),
             # 0xFB: (self._ei,            1,[4],        "----"),
             # 0xCB: (self.cb_prefix_table),
@@ -325,7 +325,6 @@ class CPU(SingletonBase):
         }
 
         # ---  opCode Implementations --- #
-        # TODO: Determine overall template for instruction set implementation
 
     def _nop(self):
         # Program Counters won't do anything. Step Function will increment the cycles correctly
@@ -1394,10 +1393,127 @@ class CPU(SingletonBase):
             return None, 12
 
 
+    def _perform_jump(self, target_addr):
+        # Return the target address as the PC override and cycle count
+        return target_addr, 16
+
+    def _jp_a16(self, operandAddr):
+        # Read the 16-bit target address from memory
+        target_addr = self.Memory.readWord(operandAddr)
+        return self._perform_jump(target_addr)
+    
+    def _jp_nz_a16(self, operandAddr):
+        if self.Flags.z == 0:
+            target_addr = self.Memory.readWord(operandAddr)
+            return self._perform_jump(target_addr)
+        else:
+            return None, 12
+
+    def _jp_z_a16(self, operandAddr):
+        if self.Flags.z == 1:
+            target_addr = self.Memory.readWord(operandAddr)
+            return self._perform_jump(target_addr)
+        else:
+            return None, 12
+        
+    def _jp_nc_a16(self, operandAddr):
+        if self.Flags.c == 0:
+            target_addr = self.Memory.readWord(operandAddr)
+            return self._perform_jump(target_addr)
+        else:
+            return None, 12
+        
+    def _jp_c_a16(self, operandAddr):
+        if self.Flags.c == 1:
+            target_addr = self.Memory.readWord(operandAddr)
+            return self._perform_jump(target_addr)
+        else:
+            return None, 12
+        
+    def _jp_hl(self, operandAddr):
+        # Return the address in HL as the PC override and cycle count
+        target_addr = self.CoreWords.HL & 0xFFFF
+        return target_addr, 4
 
 
+    def _perform_ret(self):
+        lsB = self.Memory.readByte(self.CoreWords.SP)
+        self.CoreWords.SP = (self.CoreWords.SP + 1) & 0xFFFF
+        msB = self.Memory.readByte(self.CoreWords.SP)
+        self.CoreWords.SP = (self.CoreWords.SP + 1) & 0xFFFF
+
+        target_addr = (msB << 8) | lsB
+        return target_addr
+    
+    def _ret(self, operandAddr):
+        return self._perform_ret(), 16
+    
+    def _ret_nz(self, operandAddr):
+        if self.Flags.z == 0:
+            return self._perform_ret(), 20
+        else:
+            return None, 8
+        
+    def _ret_z(self, operandAddr):
+        if self.Flags.z == 1:
+            return self._perform_ret(), 20
+        else:
+            return None, 8
+        
+    def _ret_nc(self, operandAddr):
+        if self.Flags.c == 0:
+            return self._perform_ret(), 20
+        else:
+            return None, 8
+        
+    def _ret_c(self, operandAddr):
+        if self.Flags.c == 1:
+            return self._perform_ret(), 20
+        else:
+            return None, 8
+        
+    def _reti(self, operandAddr):
+        #TODO Implement Enable/Disable Interrupts
+        pass
 
 
+    # Helper specifically for RST instructions
+    def _perform_rst(self, target_addr):
+        # Calculate return address (instruction AFTER the 1-byte RST)
+        return_addr = (self.CoreWords.PC + 1) & 0xFFFF
+        # Decrement SP by 2
+        # TODO - Verify SP can be decremented by 2, and then the word can be written to SP
+        # Or do I need to decrement by 1, write the first byte, then decrement by 1 again and write the second byte?
+        self.CoreWords.SP = (self.CoreWords.SP - 2) & 0xFFFF
+        # Push return address onto stack
+        self.Memory.writeWord(return_addr, self.CoreWords.SP)
+        # Return the target address as the PC override and cycle count
+        return target_addr, 16
+
+    # Renamed methods for clarity (e.g., _rst_00h)
+    def _rst_00h(self, operandAddr):
+        return self._perform_rst(0x0000)
+
+    def _rst_08h(self, operandAddr):
+        return self._perform_rst(0x0008)
+
+    def _rst_10h(self, operandAddr):
+        return self._perform_rst(0x0010)
+
+    def _rst_18h(self, operandAddr):
+        return self._perform_rst(0x0018)
+
+    def _rst_20h(self, operandAddr):
+        return self._perform_rst(0x0020)
+
+    def _rst_28h(self, operandAddr):
+        return self._perform_rst(0x0028)
+
+    def _rst_30h(self, operandAddr):
+        return self._perform_rst(0x0030)
+
+    def _rst_38h(self, operandAddr):
+        return self._perform_rst(0x0038)
 
 
 

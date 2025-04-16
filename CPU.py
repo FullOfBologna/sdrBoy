@@ -324,6 +324,99 @@ class CPU(SingletonBase):
             # 0xED: ("N/A"),
         }
 
+        self.cb_prefix_table = {
+        #     # RLC r8 / (HL)
+            # 0x00: (self._cb_rlc_b,   2, [8],  "Z00C"), # RLC B
+        #     0x01: (self._cb_rlc_c,   2, [8],  "Z00C"), # RLC C
+        #     0x02: (self._cb_rlc_d,   2, [8],  "Z00C"), # RLC D
+        #     0x03: (self._cb_rlc_e,   2, [8],  "Z00C"), # RLC E
+        #     0x04: (self._cb_rlc_h,   2, [8],  "Z00C"), # RLC H
+        #     0x05: (self._cb_rlc_l,   2, [8],  "Z00C"), # RLC L
+        #     0x06: (self._cb_rlc_mhl, 2, [16], "Z00C"), # RLC (HL)
+        #     0x07: (self._cb_rlc_a,   2, [8],  "Z00C"), # RLC A
+        #     # RRC r8 / (HL)
+        #     0x08: (self._cb_rrc_b,   2, [8],  "Z00C"), # RRC B
+        #     0x09: (self._cb_rrc_c,   2, [8],  "Z00C"), # RRC C
+        #     0x0A: (self._cb_rrc_d,   2, [8],  "Z00C"), # RRC D
+        #     0x0B: (self._cb_rrc_e,   2, [8],  "Z00C"), # RRC E
+        #     0x0C: (self._cb_rrc_h,   2, [8],  "Z00C"), # RRC H
+        #     0x0D: (self._cb_rrc_l,   2, [8],  "Z00C"), # RRC L
+        #     0x0E: (self._cb_rrc_mhl, 2, [16], "Z00C"), # RRC (HL)
+        #     0x0F: (self._cb_rrc_a,   2, [8],  "Z00C"), # RRC A
+        #     # RL r8 / (HL)
+        #     0x10: (self._cb_rl_b,    2, [8],  "Z00C"), # RL B
+        #     0x11: (self._cb_rl_c,    2, [8],  "Z00C"), # RL C
+        #     0x12: (self._cb_rl_d,    2, [8],  "Z00C"), # RL D
+        #     0x13: (self._cb_rl_e,    2, [8],  "Z00C"), # RL E
+        #     0x14: (self._cb_rl_h,    2, [8],  "Z00C"), # RL H
+        #     0x15: (self._cb_rl_l,    2, [8],  "Z00C"), # RL L
+        #     0x16: (self._cb_rl_mhl,  2, [16], "Z00C"), # RL (HL)
+        #     0x17: (self._cb_rl_a,    2, [8],  "Z00C"), # RL A
+        #     # RR r8 / (HL)
+        #     0x18: (self._cb_rr_b,    2, [8],  "Z00C"), # RR B
+        #     0x19: (self._cb_rr_c,    2, [8],  "Z00C"), # RR C
+        #     0x1A: (self._cb_rr_d,    2, [8],  "Z00C"), # RR D
+        #     0x1B: (self._cb_rr_e,    2, [8],  "Z00C"), # RR E
+        #     0x1C: (self._cb_rr_h,    2, [8],  "Z00C"), # RR H
+        #     0x1D: (self._cb_rr_l,    2, [8],  "Z00C"), # RR L
+        #     0x1E: (self._cb_rr_mhl,  2, [16], "Z00C"), # RR (HL)
+        #     0x1F: (self._cb_rr_a,    2, [8],  "Z00C"), # RR A
+        #     # SLA r8 / (HL)
+        #     0x20: (self._cb_sla_b,   2, [8],  "Z00C"), # SLA B
+        #     0x21: (self._cb_sla_c,   2, [8],  "Z00C"), # SLA C
+        #     0x22: (self._cb_sla_d,   2, [8],  "Z00C"), # SLA D
+        #     0x23: (self._cb_sla_e,   2, [8],  "Z00C"), # SLA E
+        #     0x24: (self._cb_sla_h,   2, [8],  "Z00C"), # SLA H
+        #     0x25: (self._cb_sla_l,   2, [8],  "Z00C"), # SLA L
+        #     0x26: (self._cb_sla_mhl, 2, [16], "Z00C"), # SLA (HL)
+        #     0x27: (self._cb_sla_a,   2, [8],  "Z00C"), # SLA A
+        #     # SRA r8 / (HL)
+        #     0x28: (self._cb_sra_b,   2, [8],  "Z000"), # SRA B - Note: C flag IS affected, ZNHC = Z00C
+        #     0x29: (self._cb_sra_c,   2, [8],  "Z000"), # SRA C
+        #     0x2A: (self._cb_sra_d,   2, [8],  "Z000"), # SRA D
+        #     0x2B: (self._cb_sra_e,   2, [8],  "Z000"), # SRA E
+        #     0x2C: (self._cb_sra_h,   2, [8],  "Z000"), # SRA H
+        #     0x2D: (self._cb_sra_l,   2, [8],  "Z000"), # SRA L
+        #     0x2E: (self._cb_sra_mhl, 2, [16], "Z000"), # SRA (HL)
+        #     0x2F: (self._cb_sra_a,   2, [8],  "Z000"), # SRA A
+        #     # SWAP r8 / (HL)
+        #     0x30: (self._cb_swap_b,  2, [8],  "Z000"), # SWAP B
+        #     0x31: (self._cb_swap_c,  2, [8],  "Z000"), # SWAP C
+        #     0x32: (self._cb_swap_d,  2, [8],  "Z000"), # SWAP D
+        #     0x33: (self._cb_swap_e,  2, [8],  "Z000"), # SWAP E
+        #     0x34: (self._cb_swap_h,  2, [8],  "Z000"), # SWAP H
+        #     0x35: (self._cb_swap_l,  2, [8],  "Z000"), # SWAP L
+        #     0x36: (self._cb_swap_mhl,2, [16], "Z000"), # SWAP (HL)
+        #     0x37: (self._cb_swap_a,  2, [8],  "Z000"), # SWAP A
+        #     # SRL r8 / (HL)
+        #     0x38: (self._cb_srl_b,   2, [8],  "Z00C"), # SRL B
+        #     0x39: (self._cb_srl_c,   2, [8],  "Z00C"), # SRL C
+        #     0x3A: (self._cb_srl_d,   2, [8],  "Z00C"), # SRL D
+        #     0x3B: (self._cb_srl_e,   2, [8],  "Z00C"), # SRL E
+        #     0x3C: (self._cb_srl_h,   2, [8],  "Z00C"), # SRL H
+        #     0x3D: (self._cb_srl_l,   2, [8],  "Z00C"), # SRL L
+        #     0x3E: (self._cb_srl_mhl, 2, [16], "Z00C"), # SRL (HL)
+        #     0x3F: (self._cb_srl_a,   2, [8],  "Z00C"), # SRL A
+        #     # BIT b, r8 / (HL)
+        #     0x40: (self._cb_bit_0_b,   2, [8],  "Z01-"), # BIT 0, B
+        #     0x41: (self._cb_bit_0_c,   2, [8],  "Z01-"), # BIT 0, C
+        #     # ... (all combinations up to 0x7F)
+        #     0x7E: (self._cb_bit_7_mhl, 2, [12], "Z01-"), # BIT 7, (HL) - Note: (HL) takes 12 cycles
+        #     0x7F: (self._cb_bit_7_a,   2, [8],  "Z01-"), # BIT 7, A
+        #     # RES b, r8 / (HL)
+        #     0x80: (self._cb_res_0_b,   2, [8],  "----"), # RES 0, B
+        #     0x81: (self._cb_res_0_c,   2, [8],  "----"), # RES 0, C
+        #     # ... (all combinations up to 0xBF)
+        #     0xBE: (self._cb_res_7_mhl, 2, [16], "----"), # RES 7, (HL)
+        #     0xBF: (self._cb_res_7_a,   2, [8],  "----"), # RES 7, A
+        #     # SET b, r8 / (HL)
+        #     0xC0: (self._cb_set_0_b,   2, [8],  "----"), # SET 0, B
+        #     0xC1: (self._cb_set_0_c,   2, [8],  "----"), # SET 0, C
+        #     # ... (all combinations up to 0xFF)
+        #     0xFE: (self._cb_set_7_mhl, 2, [16], "----"), # SET 7, (HL)
+        #     0xFF: (self._cb_set_7_a,   2, [8],  "----"), # SET 7, A
+        }
+
         # ---  opCode Implementations --- #
 
     def _nop(self):

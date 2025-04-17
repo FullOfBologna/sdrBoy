@@ -4,7 +4,7 @@ from Registers import Byte
 from Registers import Word
 
 
-GAMEBOY_MEMORY_SIZE = 0xFFFF
+GAMEBOY_MEMORY_SIZE = 0x10000 # 64KB
 
 class Memory(SingletonBase):
     _initialized = False

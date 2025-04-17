@@ -128,9 +128,9 @@ class CPU(SingletonBase):
             0x28: (self._jr_z_r8,       2,[12,8],     "----"),
             0x38: (self._jr_c_r8,       2,[12,8],     "----"),
             0x27: (self._daa,           1,[ 4],       "Z-0C"),
-            # 0x37: (self._scf,           1,[ 4],       "-001"),
-            # 0x2F: (self._cpl,           1,[ 4],       "-11-"),
-            # 0x3F: (self._ccf,           1,[ 4],       "-00C"),
+            0x37: (self._scf,           1,[ 4],       "-001"),
+            0x2F: (self._cpl,           1,[ 4],       "-11-"),
+            0x3F: (self._ccf,           1,[ 4],       "-00C"),
             0x40: (self._ld_b_b,        1,[ 4],       "----"),
             0x41: (self._ld_b_c,        1,[ 4],       "----"),
             0x42: (self._ld_b_d,        1,[ 4],       "----"),
@@ -219,7 +219,7 @@ class CPU(SingletonBase):
             0x95: (self._sub_a_l,       1,[ 4],       "Z1HC"),
             0x96: (self._sub_a_mhl,     1,[ 8],       "Z1HC"),
             0x97: (self._sub_a_a,       1,[ 4],       "Z1HC"),
-            0xD6: (self._sub_a_d8,        2,[8],        "Z1HC"),
+            0xD6: (self._sub_a_d8,      2,[8],        "Z1HC"),
             0x98: (self._sbc_a_b,       1,[ 4],       "Z1HC"),
             0x99: (self._sbc_a_c,       1,[ 4],       "Z1HC"),
             0x9A: (self._sbc_a_d,       1,[ 4],       "Z1HC"),
@@ -246,7 +246,7 @@ class CPU(SingletonBase):
             0xAD: (self._xor_a_l,       1,[ 4],       "Z000"),
             0xAE: (self._xor_a_mhl,     1,[ 8],       "Z000"),
             0xAF: (self._xor_a_a,       1,[ 4],       "Z000"),
-            0xEE: (self._xor_a_d8,        2,[8],        "ZOOO"),
+            0xEE: (self._xor_a_d8,      2,[8],        "ZOOO"),
             0xB0: (self._or_a_b,        1,[ 4],       "Z000"),
             0xB1: (self._or_a_c,        1,[ 4],       "Z000"),
             0xB2: (self._or_a_d,        1,[ 4],       "Z000"),
@@ -255,7 +255,7 @@ class CPU(SingletonBase):
             0xB5: (self._or_a_l,        1,[ 4],       "Z000"),
             0xB6: (self._or_a_mhl,      1,[ 8],       "Z000"),
             0xB7: (self._or_a_a,        1,[ 4],       "Z000"),
-            0xF6: (self._or_a_d8,         2,[8],        "Z000"),
+            0xF6: (self._or_a_d8,       2,[8],        "Z000"),
             0xB8: (self._cp_a_b,        1,[ 4],       "Z1HC"),
             0xB9: (self._cp_a_c,        1,[ 4],       "Z1HC"),
             0xBA: (self._cp_a_d,        1,[ 4],       "Z1HC"),
@@ -264,7 +264,7 @@ class CPU(SingletonBase):
             0xBD: (self._cp_a_l,        1,[ 4],       "Z1HC"),
             0xBE: (self._cp_a_mhl,      1,[ 8],       "Z1HC"),
             0xBF: (self._cp_a_a,        1,[ 4],       "Z1HC"),
-            0xFE: (self._cp_a_d8,         2,[8],        "Z1HC"),
+            0xFE: (self._cp_a_d8,       2,[8],        "Z1HC"),
             0xCD: (self._call_a16,      3,[24],       "----"),
             0xC4: (self._call_nz_a16,   3,[24,12],    "----"),
             0xCC: (self._call_z_a16,    3,[24,12],    "----"),
@@ -298,18 +298,18 @@ class CPU(SingletonBase):
             0xEF: (self._rst_28h,       1,[16],       "----"),
             0xF7: (self._rst_30h,       1,[16],       "----"),
             0xFF: (self._rst_38h,       1,[16],       "----"),
-            # 0xF2: (self._ldh_a_mc,        2,[8],        "----"),
-            # 0xE2: (self._ldh_mc_a,        2,[8],        "----"),
-            # 0xE0: (self._ldh_ma8_a,      2,[12],       "----"),
-            # 0xF0: (self._ldh_a_ma8,      2,[12],       "----"),
-            # 0xF8: (self._ld_hl_spp_r8,  2,[12],       "00HC"),
-            # 0xF9: (self._ld_sp_hl,      1,[8],        "----"),
-            # 0xEA: (self._ld_ma16_a,      3,[16],       "----"),
-            # 0xFA: (self._ld_a_ma16,      3,[16],       "----"),
-            # 0xF3: (self._di,            1,[4],        "----"),
-            # 0xFB: (self._ei,            1,[4],        "----"),
+            0xF2: (self._ldh_a_mc,      2,[8],        "----"),
+            0xE2: (self._ldh_mc_a,      2,[8],        "----"),
+            0xE0: (self._ldh_ma8_a,     2,[12],       "----"),
+            0xF0: (self._ldh_a_ma8,     2,[12],       "----"),
+            0xEA: (self._ld_ma16_a,     3,[16],       "----"),
+            0xFA: (self._ld_a_ma16,     3,[16],       "----"),
+            0xF8: (self._ld_hl_sp_r8,   2,[12],       "00HC"),
+            0xF9: (self._ld_sp_hl,      1,[8],        "----"),
+            0xF3: (self._di,            1,[4],        "----"),
+            0xFB: (self._ei,            1,[4],        "----"),
             # 0xCB: (self.cb_prefix_table),
-            # 0x76: (self._halt,          1,[ 4],       "----"),
+            0x76: (self._halt,          1,[ 4],       "----"),
             0x10: (self._stop_0,        2,[ 4],       "----"),
             # 0xDB: ("N/A"),
             # 0xF4: ("N/A"),
@@ -325,96 +325,294 @@ class CPU(SingletonBase):
         }
 
         self.cb_prefix_table = {
-        #     # RLC r8 / (HL)
+            # RLC r8 / (HL)
             # 0x00: (self._cb_rlc_b,   2, [8],  "Z00C"), # RLC B
-        #     0x01: (self._cb_rlc_c,   2, [8],  "Z00C"), # RLC C
-        #     0x02: (self._cb_rlc_d,   2, [8],  "Z00C"), # RLC D
-        #     0x03: (self._cb_rlc_e,   2, [8],  "Z00C"), # RLC E
-        #     0x04: (self._cb_rlc_h,   2, [8],  "Z00C"), # RLC H
-        #     0x05: (self._cb_rlc_l,   2, [8],  "Z00C"), # RLC L
-        #     0x06: (self._cb_rlc_mhl, 2, [16], "Z00C"), # RLC (HL)
-        #     0x07: (self._cb_rlc_a,   2, [8],  "Z00C"), # RLC A
-        #     # RRC r8 / (HL)
-        #     0x08: (self._cb_rrc_b,   2, [8],  "Z00C"), # RRC B
-        #     0x09: (self._cb_rrc_c,   2, [8],  "Z00C"), # RRC C
-        #     0x0A: (self._cb_rrc_d,   2, [8],  "Z00C"), # RRC D
-        #     0x0B: (self._cb_rrc_e,   2, [8],  "Z00C"), # RRC E
-        #     0x0C: (self._cb_rrc_h,   2, [8],  "Z00C"), # RRC H
-        #     0x0D: (self._cb_rrc_l,   2, [8],  "Z00C"), # RRC L
-        #     0x0E: (self._cb_rrc_mhl, 2, [16], "Z00C"), # RRC (HL)
-        #     0x0F: (self._cb_rrc_a,   2, [8],  "Z00C"), # RRC A
-        #     # RL r8 / (HL)
-        #     0x10: (self._cb_rl_b,    2, [8],  "Z00C"), # RL B
-        #     0x11: (self._cb_rl_c,    2, [8],  "Z00C"), # RL C
-        #     0x12: (self._cb_rl_d,    2, [8],  "Z00C"), # RL D
-        #     0x13: (self._cb_rl_e,    2, [8],  "Z00C"), # RL E
-        #     0x14: (self._cb_rl_h,    2, [8],  "Z00C"), # RL H
-        #     0x15: (self._cb_rl_l,    2, [8],  "Z00C"), # RL L
-        #     0x16: (self._cb_rl_mhl,  2, [16], "Z00C"), # RL (HL)
-        #     0x17: (self._cb_rl_a,    2, [8],  "Z00C"), # RL A
-        #     # RR r8 / (HL)
-        #     0x18: (self._cb_rr_b,    2, [8],  "Z00C"), # RR B
-        #     0x19: (self._cb_rr_c,    2, [8],  "Z00C"), # RR C
-        #     0x1A: (self._cb_rr_d,    2, [8],  "Z00C"), # RR D
-        #     0x1B: (self._cb_rr_e,    2, [8],  "Z00C"), # RR E
-        #     0x1C: (self._cb_rr_h,    2, [8],  "Z00C"), # RR H
-        #     0x1D: (self._cb_rr_l,    2, [8],  "Z00C"), # RR L
-        #     0x1E: (self._cb_rr_mhl,  2, [16], "Z00C"), # RR (HL)
-        #     0x1F: (self._cb_rr_a,    2, [8],  "Z00C"), # RR A
-        #     # SLA r8 / (HL)
-        #     0x20: (self._cb_sla_b,   2, [8],  "Z00C"), # SLA B
-        #     0x21: (self._cb_sla_c,   2, [8],  "Z00C"), # SLA C
-        #     0x22: (self._cb_sla_d,   2, [8],  "Z00C"), # SLA D
-        #     0x23: (self._cb_sla_e,   2, [8],  "Z00C"), # SLA E
-        #     0x24: (self._cb_sla_h,   2, [8],  "Z00C"), # SLA H
-        #     0x25: (self._cb_sla_l,   2, [8],  "Z00C"), # SLA L
-        #     0x26: (self._cb_sla_mhl, 2, [16], "Z00C"), # SLA (HL)
-        #     0x27: (self._cb_sla_a,   2, [8],  "Z00C"), # SLA A
-        #     # SRA r8 / (HL)
-        #     0x28: (self._cb_sra_b,   2, [8],  "Z000"), # SRA B - Note: C flag IS affected, ZNHC = Z00C
-        #     0x29: (self._cb_sra_c,   2, [8],  "Z000"), # SRA C
-        #     0x2A: (self._cb_sra_d,   2, [8],  "Z000"), # SRA D
-        #     0x2B: (self._cb_sra_e,   2, [8],  "Z000"), # SRA E
-        #     0x2C: (self._cb_sra_h,   2, [8],  "Z000"), # SRA H
-        #     0x2D: (self._cb_sra_l,   2, [8],  "Z000"), # SRA L
-        #     0x2E: (self._cb_sra_mhl, 2, [16], "Z000"), # SRA (HL)
-        #     0x2F: (self._cb_sra_a,   2, [8],  "Z000"), # SRA A
-        #     # SWAP r8 / (HL)
-        #     0x30: (self._cb_swap_b,  2, [8],  "Z000"), # SWAP B
-        #     0x31: (self._cb_swap_c,  2, [8],  "Z000"), # SWAP C
-        #     0x32: (self._cb_swap_d,  2, [8],  "Z000"), # SWAP D
-        #     0x33: (self._cb_swap_e,  2, [8],  "Z000"), # SWAP E
-        #     0x34: (self._cb_swap_h,  2, [8],  "Z000"), # SWAP H
-        #     0x35: (self._cb_swap_l,  2, [8],  "Z000"), # SWAP L
-        #     0x36: (self._cb_swap_mhl,2, [16], "Z000"), # SWAP (HL)
-        #     0x37: (self._cb_swap_a,  2, [8],  "Z000"), # SWAP A
-        #     # SRL r8 / (HL)
-        #     0x38: (self._cb_srl_b,   2, [8],  "Z00C"), # SRL B
-        #     0x39: (self._cb_srl_c,   2, [8],  "Z00C"), # SRL C
-        #     0x3A: (self._cb_srl_d,   2, [8],  "Z00C"), # SRL D
-        #     0x3B: (self._cb_srl_e,   2, [8],  "Z00C"), # SRL E
-        #     0x3C: (self._cb_srl_h,   2, [8],  "Z00C"), # SRL H
-        #     0x3D: (self._cb_srl_l,   2, [8],  "Z00C"), # SRL L
-        #     0x3E: (self._cb_srl_mhl, 2, [16], "Z00C"), # SRL (HL)
-        #     0x3F: (self._cb_srl_a,   2, [8],  "Z00C"), # SRL A
-        #     # BIT b, r8 / (HL)
-        #     0x40: (self._cb_bit_0_b,   2, [8],  "Z01-"), # BIT 0, B
-        #     0x41: (self._cb_bit_0_c,   2, [8],  "Z01-"), # BIT 0, C
-        #     # ... (all combinations up to 0x7F)
-        #     0x7E: (self._cb_bit_7_mhl, 2, [12], "Z01-"), # BIT 7, (HL) - Note: (HL) takes 12 cycles
-        #     0x7F: (self._cb_bit_7_a,   2, [8],  "Z01-"), # BIT 7, A
-        #     # RES b, r8 / (HL)
-        #     0x80: (self._cb_res_0_b,   2, [8],  "----"), # RES 0, B
-        #     0x81: (self._cb_res_0_c,   2, [8],  "----"), # RES 0, C
-        #     # ... (all combinations up to 0xBF)
-        #     0xBE: (self._cb_res_7_mhl, 2, [16], "----"), # RES 7, (HL)
-        #     0xBF: (self._cb_res_7_a,   2, [8],  "----"), # RES 7, A
-        #     # SET b, r8 / (HL)
-        #     0xC0: (self._cb_set_0_b,   2, [8],  "----"), # SET 0, B
-        #     0xC1: (self._cb_set_0_c,   2, [8],  "----"), # SET 0, C
-        #     # ... (all combinations up to 0xFF)
-        #     0xFE: (self._cb_set_7_mhl, 2, [16], "----"), # SET 7, (HL)
-        #     0xFF: (self._cb_set_7_a,   2, [8],  "----"), # SET 7, A
+            # 0x01: (self._cb_rlc_c,   2, [8],  "Z00C"), # RLC C
+            # 0x02: (self._cb_rlc_d,   2, [8],  "Z00C"), # RLC D
+            # 0x03: (self._cb_rlc_e,   2, [8],  "Z00C"), # RLC E
+            # 0x04: (self._cb_rlc_h,   2, [8],  "Z00C"), # RLC H
+            # 0x05: (self._cb_rlc_l,   2, [8],  "Z00C"), # RLC L
+            # 0x06: (self._cb_rlc_mhl, 2, [16], "Z00C"), # RLC (HL)
+            # 0x07: (self._cb_rlc_a,   2, [8],  "Z00C"), # RLC A
+            # # RRC r8 / (HL)
+            # 0x08: (self._cb_rrc_b,   2, [8],  "Z00C"), # RRC B
+            # 0x09: (self._cb_rrc_c,   2, [8],  "Z00C"), # RRC C
+            # 0x0A: (self._cb_rrc_d,   2, [8],  "Z00C"), # RRC D
+            # 0x0B: (self._cb_rrc_e,   2, [8],  "Z00C"), # RRC E
+            # 0x0C: (self._cb_rrc_h,   2, [8],  "Z00C"), # RRC H
+            # 0x0D: (self._cb_rrc_l,   2, [8],  "Z00C"), # RRC L
+            # 0x0E: (self._cb_rrc_mhl, 2, [16], "Z00C"), # RRC (HL)
+            # 0x0F: (self._cb_rrc_a,   2, [8],  "Z00C"), # RRC A
+            # # RL r8 / (HL)
+            # 0x10: (self._cb_rl_b,    2, [8],  "Z00C"), # RL B
+            # 0x11: (self._cb_rl_c,    2, [8],  "Z00C"), # RL C
+            # 0x12: (self._cb_rl_d,    2, [8],  "Z00C"), # RL D
+            # 0x13: (self._cb_rl_e,    2, [8],  "Z00C"), # RL E
+            # 0x14: (self._cb_rl_h,    2, [8],  "Z00C"), # RL H
+            # 0x15: (self._cb_rl_l,    2, [8],  "Z00C"), # RL L
+            # 0x16: (self._cb_rl_mhl,  2, [16], "Z00C"), # RL (HL)
+            # 0x17: (self._cb_rl_a,    2, [8],  "Z00C"), # RL A
+            # # RR r8 / (HL)
+            # 0x18: (self._cb_rr_b,    2, [8],  "Z00C"), # RR B
+            # 0x19: (self._cb_rr_c,    2, [8],  "Z00C"), # RR C
+            # 0x1A: (self._cb_rr_d,    2, [8],  "Z00C"), # RR D
+            # 0x1B: (self._cb_rr_e,    2, [8],  "Z00C"), # RR E
+            # 0x1C: (self._cb_rr_h,    2, [8],  "Z00C"), # RR H
+            # 0x1D: (self._cb_rr_l,    2, [8],  "Z00C"), # RR L
+            # 0x1E: (self._cb_rr_mhl,  2, [16], "Z00C"), # RR (HL)
+            # 0x1F: (self._cb_rr_a,    2, [8],  "Z00C"), # RR A
+            # # SLA r8 / (HL)
+            # 0x20: (self._cb_sla_b,   2, [8],  "Z00C"), # SLA B
+            # 0x21: (self._cb_sla_c,   2, [8],  "Z00C"), # SLA C
+            # 0x22: (self._cb_sla_d,   2, [8],  "Z00C"), # SLA D
+            # 0x23: (self._cb_sla_e,   2, [8],  "Z00C"), # SLA E
+            # 0x24: (self._cb_sla_h,   2, [8],  "Z00C"), # SLA H
+            # 0x25: (self._cb_sla_l,   2, [8],  "Z00C"), # SLA L
+            # 0x26: (self._cb_sla_mhl, 2, [16], "Z00C"), # SLA (HL)
+            # 0x27: (self._cb_sla_a,   2, [8],  "Z00C"), # SLA A
+            # # SRA r8 / (HL)
+            # 0x28: (self._cb_sra_b,   2, [8],  "Z000"), # SRA B - Note: C flag IS affected, ZNHC = Z00C
+            # 0x29: (self._cb_sra_c,   2, [8],  "Z000"), # SRA C
+            # 0x2A: (self._cb_sra_d,   2, [8],  "Z000"), # SRA D
+            # 0x2B: (self._cb_sra_e,   2, [8],  "Z000"), # SRA E
+            # 0x2C: (self._cb_sra_h,   2, [8],  "Z000"), # SRA H
+            # 0x2D: (self._cb_sra_l,   2, [8],  "Z000"), # SRA L
+            # 0x2E: (self._cb_sra_mhl, 2, [16], "Z000"), # SRA (HL)
+            # 0x2F: (self._cb_sra_a,   2, [8],  "Z000"), # SRA A
+            # # SWAP r8 / (HL)
+            # 0x30: (self._cb_swap_b,  2, [8],  "Z000"), # SWAP B
+            # 0x31: (self._cb_swap_c,  2, [8],  "Z000"), # SWAP C
+            # 0x32: (self._cb_swap_d,  2, [8],  "Z000"), # SWAP D
+            # 0x33: (self._cb_swap_e,  2, [8],  "Z000"), # SWAP E
+            # 0x34: (self._cb_swap_h,  2, [8],  "Z000"), # SWAP H
+            # 0x35: (self._cb_swap_l,  2, [8],  "Z000"), # SWAP L
+            # 0x36: (self._cb_swap_mhl,2, [16], "Z000"), # SWAP (HL)
+            # 0x37: (self._cb_swap_a,  2, [8],  "Z000"), # SWAP A
+            # # SRL r8 / (HL)
+            # 0x38: (self._cb_srl_b,   2, [8],  "Z00C"), # SRL B
+            # 0x39: (self._cb_srl_c,   2, [8],  "Z00C"), # SRL C
+            # 0x3A: (self._cb_srl_d,   2, [8],  "Z00C"), # SRL D
+            # 0x3B: (self._cb_srl_e,   2, [8],  "Z00C"), # SRL E
+            # 0x3C: (self._cb_srl_h,   2, [8],  "Z00C"), # SRL H
+            # 0x3D: (self._cb_srl_l,   2, [8],  "Z00C"), # SRL L
+            # 0x3E: (self._cb_srl_mhl, 2, [16], "Z00C"), # SRL (HL)
+            # 0x3F: (self._cb_srl_a,   2, [8],  "Z00C"), # SRL A
+            # # BIT 0, r8 / (HL)
+            # 0x40: (self._cb_bit_0_b,   2, [8],  "Z01-"), # BIT 0, B
+            # 0x41: (self._cb_bit_0_c,   2, [8],  "Z01-"), # BIT 0, C
+            # 0x42: (self._cb_bit_0_d,   2, [8],  "Z01-"), # BIT 0, D
+            # 0x43: (self._cb_bit_0_e,   2, [8],  "Z01-"), # BIT 0, E
+            # 0x44: (self._cb_bit_0_h,   2, [8],  "Z01-"), # BIT 0, H
+            # 0x45: (self._cb_bit_0_l,   2, [8],  "Z01-"), # BIT 0, L
+            # 0x46: (self._cb_bit_0_mhl, 2, [12], "Z01-"), # BIT 0, (HL)
+            # 0x47: (self._cb_bit_0_a,   2, [8],  "Z01-"), # BIT 0, A
+            # # BIT 1, r8 / (HL)
+            # 0x48: (self._cb_bit_1_b,   2, [8],  "Z01-"), # BIT 1, B
+            # 0x49: (self._cb_bit_1_c,   2, [8],  "Z01-"), # BIT 1, C
+            # 0x4A: (self._cb_bit_1_d,   2, [8],  "Z01-"), # BIT 1, D
+            # 0x4B: (self._cb_bit_1_e,   2, [8],  "Z01-"), # BIT 1, E
+            # 0x4C: (self._cb_bit_1_h,   2, [8],  "Z01-"), # BIT 1, H
+            # 0x4D: (self._cb_bit_1_l,   2, [8],  "Z01-"), # BIT 1, L
+            # 0x4E: (self._cb_bit_1_mhl, 2, [12], "Z01-"), # BIT 1, (HL)
+            # 0x4F: (self._cb_bit_1_a,   2, [8],  "Z01-"), # BIT 1, A
+            # # BIT 2, r8 / (HL)
+            # 0x50: (self._cb_bit_2_b,   2, [8],  "Z01-"), # BIT 2, B
+            # 0x51: (self._cb_bit_2_c,   2, [8],  "Z01-"), # BIT 2, C
+            # 0x52: (self._cb_bit_2_d,   2, [8],  "Z01-"), # BIT 2, D
+            # 0x53: (self._cb_bit_2_e,   2, [8],  "Z01-"), # BIT 2, E
+            # 0x54: (self._cb_bit_2_h,   2, [8],  "Z01-"), # BIT 2, H
+            # 0x55: (self._cb_bit_2_l,   2, [8],  "Z01-"), # BIT 2, L
+            # 0x56: (self._cb_bit_2_mhl, 2, [12], "Z01-"), # BIT 2, (HL)
+            # 0x57: (self._cb_bit_2_a,   2, [8],  "Z01-"), # BIT 2, A
+            # # BIT 3, r8 / (HL)
+            # 0x58: (self._cb_bit_3_b,   2, [8],  "Z01-"), # BIT 3, B
+            # 0x59: (self._cb_bit_3_c,   2, [8],  "Z01-"), # BIT 3, C
+            # 0x5A: (self._cb_bit_3_d,   2, [8],  "Z01-"), # BIT 3, D
+            # 0x5B: (self._cb_bit_3_e,   2, [8],  "Z01-"), # BIT 3, E
+            # 0x5C: (self._cb_bit_3_h,   2, [8],  "Z01-"), # BIT 3, H
+            # 0x5D: (self._cb_bit_3_l,   2, [8],  "Z01-"), # BIT 3, L
+            # 0x5E: (self._cb_bit_3_mhl, 2, [12], "Z01-"), # BIT 3, (HL)
+            # 0x5F: (self._cb_bit_3_a,   2, [8],  "Z01-"), # BIT 3, A
+            # # BIT 4, r8 / (HL)
+            # 0x60: (self._cb_bit_4_b,   2, [8],  "Z01-"), # BIT 4, B
+            # 0x61: (self._cb_bit_4_c,   2, [8],  "Z01-"), # BIT 4, C
+            # 0x62: (self._cb_bit_4_d,   2, [8],  "Z01-"), # BIT 4, D
+            # 0x63: (self._cb_bit_4_e,   2, [8],  "Z01-"), # BIT 4, E
+            # 0x64: (self._cb_bit_4_h,   2, [8],  "Z01-"), # BIT 4, H
+            # 0x65: (self._cb_bit_4_l,   2, [8],  "Z01-"), # BIT 4, L
+            # 0x66: (self._cb_bit_4_mhl, 2, [12], "Z01-"), # BIT 4, (HL)
+            # 0x67: (self._cb_bit_4_a,   2, [8],  "Z01-"), # BIT 4, A
+            # # BIT 5, r8 / (HL)
+            # 0x68: (self._cb_bit_5_b,   2, [8],  "Z01-"), # BIT 5, B
+            # 0x69: (self._cb_bit_5_c,   2, [8],  "Z01-"), # BIT 5, C
+            # 0x6A: (self._cb_bit_5_d,   2, [8],  "Z01-"), # BIT 5, D
+            # 0x6B: (self._cb_bit_5_e,   2, [8],  "Z01-"), # BIT 5, E
+            # 0x6C: (self._cb_bit_5_h,   2, [8],  "Z01-"), # BIT 5, H
+            # 0x6D: (self._cb_bit_5_l,   2, [8],  "Z01-"), # BIT 5, L
+            # 0x6E: (self._cb_bit_5_mhl, 2, [12], "Z01-"), # BIT 5, (HL)
+            # 0x6F: (self._cb_bit_5_a,   2, [8],  "Z01-"), # BIT 5, A
+            # # BIT 6, r8 / (HL)
+            # 0x70: (self._cb_bit_6_b,   2, [8],  "Z01-"), # BIT 6, B
+            # 0x71: (self._cb_bit_6_c,   2, [8],  "Z01-"), # BIT 6, C
+            # 0x72: (self._cb_bit_6_d,   2, [8],  "Z01-"), # BIT 6, D
+            # 0x73: (self._cb_bit_6_e,   2, [8],  "Z01-"), # BIT 6, E
+            # 0x74: (self._cb_bit_6_h,   2, [8],  "Z01-"), # BIT 6, H
+            # 0x75: (self._cb_bit_6_l,   2, [8],  "Z01-"), # BIT 6, L
+            # 0x76: (self._cb_bit_6_mhl, 2, [12], "Z01-"), # BIT 6, (HL)
+            # 0x77: (self._cb_bit_6_a,   2, [8],  "Z01-"), # BIT 6, A
+            # # BIT 7, r8 / (HL)
+            # 0x78: (self._cb_bit_7_b,   2, [8],  "Z01-"), # BIT 7, B
+            # 0x79: (self._cb_bit_7_c,   2, [8],  "Z01-"), # BIT 7, C
+            # 0x7A: (self._cb_bit_7_d,   2, [8],  "Z01-"), # BIT 7, D
+            # 0x7B: (self._cb_bit_7_e,   2, [8],  "Z01-"), # BIT 7, E
+            # 0x7C: (self._cb_bit_7_h,   2, [8],  "Z01-"), # BIT 7, H
+            # 0x7D: (self._cb_bit_7_l,   2, [8],  "Z01-"), # BIT 7, L
+            # 0x7E: (self._cb_bit_7_mhl, 2, [12], "Z01-"), # BIT 7, (HL) - Note: (HL) takes 12 cycles
+            # 0x7F: (self._cb_bit_7_a,   2, [8],  "Z01-"), # BIT 7, A
+            # # RES b, r8 / (HL)
+            # 0x80: (self._cb_res_0_b,   2, [8],  "----"), # RES 0, B
+            # 0x81: (self._cb_res_0_c,   2, [8],  "----"), # RES 0, C
+            # 0x82: (self._cb_res_0_d,   2, [8],  "----"), # RES 0, D
+            # 0x83: (self._cb_res_0_e,   2, [8],  "----"), # RES 0, E
+            # 0x84: (self._cb_res_0_h,   2, [8],  "----"), # RES 0, H
+            # 0x85: (self._cb_res_0_l,   2, [8],  "----"), # RES 0, L
+            # 0x86: (self._cb_res_0_mhl, 2, [16], "----"), # RES 0, (HL)
+            # 0x87: (self._cb_res_0_a,   2, [8],  "----"), # RES 0, A
+            # # RES 1, r8 / (HL)
+            # 0x88: (self._cb_res_1_b,   2, [8],  "----"), # RES 1, B
+            # 0x89: (self._cb_res_1_c,   2, [8],  "----"), # RES 1, C
+            # 0x8A: (self._cb_res_1_d,   2, [8],  "----"), # RES 1, D
+            # 0x8B: (self._cb_res_1_e,   2, [8],  "----"), # RES 1, E
+            # 0x8C: (self._cb_res_1_h,   2, [8],  "----"), # RES 1, H
+            # 0x8D: (self._cb_res_1_l,   2, [8],  "----"), # RES 1, L
+            # 0x8E: (self._cb_res_1_mhl, 2, [16], "----"), # RES 1, (HL)
+            # 0x8F: (self._cb_res_1_a,   2, [8],  "----"), # RES 1, A
+            # # RES 2, r8 / (HL)
+            # 0x90: (self._cb_res_2_b,   2, [8],  "----"), # RES 2, B
+            # 0x91: (self._cb_res_2_c,   2, [8],  "----"), # RES 2, C
+            # 0x92: (self._cb_res_2_d,   2, [8],  "----"), # RES 2, D
+            # 0x93: (self._cb_res_2_e,   2, [8],  "----"), # RES 2, E
+            # 0x94: (self._cb_res_2_h,   2, [8],  "----"), # RES 2, H
+            # 0x95: (self._cb_res_2_l,   2, [8],  "----"), # RES 2, L
+            # 0x96: (self._cb_res_2_mhl, 2, [16], "----"), # RES 2, (HL)
+            # 0x97: (self._cb_res_2_a,   2, [8],  "----"), # RES 2, A
+            # # RES 3, r8 / (HL)
+            # 0x98: (self._cb_res_3_b,   2, [8],  "----"), # RES 3, B
+            # 0x99: (self._cb_res_3_c,   2, [8],  "----"), # RES 3, C
+            # 0x9A: (self._cb_res_3_d,   2, [8],  "----"), # RES 3, D
+            # 0x9B: (self._cb_res_3_e,   2, [8],  "----"), # RES 3, E
+            # 0x9C: (self._cb_res_3_h,   2, [8],  "----"), # RES 3, H
+            # 0x9D: (self._cb_res_3_l,   2, [8],  "----"), # RES 3, L
+            # 0x9E: (self._cb_res_3_mhl, 2, [16], "----"), # RES 3, (HL)
+            # 0x9F: (self._cb_res_3_a,   2, [8],  "----"), # RES 3, A
+            # # RES 4, r8 / (HL)
+            # 0xA0: (self._cb_res_4_b,   2, [8],  "----"), # RES 4, B
+            # 0xA1: (self._cb_res_4_c,   2, [8],  "----"), # RES 4, C
+            # 0xA2: (self._cb_res_4_d,   2, [8],  "----"), # RES 4, D
+            # 0xA3: (self._cb_res_4_e,   2, [8],  "----"), # RES 4, E
+            # 0xA4: (self._cb_res_4_h,   2, [8],  "----"), # RES 4, H
+            # 0xA5: (self._cb_res_4_l,   2, [8],  "----"), # RES 4, L
+            # 0xA6: (self._cb_res_4_mhl, 2, [16], "----"), # RES 4, (HL)
+            # 0xA7: (self._cb_res_4_a,   2, [8],  "----"), # RES 4, A
+            # # RES 5, r8 / (HL)
+            # 0xA8: (self._cb_res_5_b,   2, [8],  "----"), # RES 5, B
+            # 0xA9: (self._cb_res_5_c,   2, [8],  "----"), # RES 5, C
+            # 0xAA: (self._cb_res_5_d,   2, [8],  "----"), # RES 5, D
+            # 0xAB: (self._cb_res_5_e,   2, [8],  "----"), # RES 5, E
+            # 0xAC: (self._cb_res_5_h,   2, [8],  "----"), # RES 5, H
+            # 0xAD: (self._cb_res_5_l,   2, [8],  "----"), # RES 5, L
+            # 0xAE: (self._cb_res_5_mhl, 2, [16], "----"), # RES 5, (HL)
+            # 0xAF: (self._cb_res_5_a,   2, [8],  "----"), # RES 5, A
+            # # RES 6, r8 / (HL)
+            # 0xB0: (self._cb_res_6_b,   2, [8],  "----"), # RES 6, B
+            # 0xB1: (self._cb_res_6_c,   2, [8],  "----"), # RES 6, C
+            # 0xB2: (self._cb_res_6_d,   2, [8],  "----"), # RES 6, D
+            # 0xB3: (self._cb_res_6_e,   2, [8],  "----"), # RES 6, E
+            # 0xB4: (self._cb_res_6_h,   2, [8],  "----"), # RES 6, H
+            # 0xB5: (self._cb_res_6_l,   2, [8],  "----"), # RES 6, L
+            # 0xB6: (self._cb_res_6_mhl, 2, [16], "----"), # RES 6, (HL)
+            # 0xB7: (self._cb_res_6_a,   2, [8],  "----"), # RES 6, A
+            # # RES 7, r8 / (HL)
+            # 0xB8: (self._cb_res_7_b,   2, [8],  "----"), # RES 7, B
+            # 0xB9: (self._cb_res_7_c,   2, [8],  "----"), # RES 7, C
+            # 0xBA: (self._cb_res_7_d,   2, [8],  "----"), # RES 7, D
+            # 0xBB: (self._cb_res_7_e,   2, [8],  "----"), # RES 7, E
+            # 0xBC: (self._cb_res_7_h,   2, [8],  "----"), # RES 7, H
+            # 0xBD: (self._cb_res_7_l,   2, [8],  "----"), # RES 7, L
+            # 0xBE: (self._cb_res_7_mhl, 2, [16], "----"), # RES 7, (HL)
+            # 0xBF: (self._cb_res_7_a,   2, [8],  "----"), # RES 7, A
+            # # SET b, r8 / (HL)
+            # 0xC0: (self._cb_set_0_b,   2, [8],  "----"), # SET 0, B
+            # 0xC1: (self._cb_set_0_c,   2, [8],  "----"), # SET 0, C
+            # 0xC2: (self._cb_set_0_d,   2, [8],  "----"), # SET 0, D
+            # 0xC3: (self._cb_set_0_e,   2, [8],  "----"), # SET 0, E
+            # 0xC4: (self._cb_set_0_h,   2, [8],  "----"), # SET 0, H
+            # 0xC5: (self._cb_set_0_l,   2, [8],  "----"), # SET 0, L
+            # 0xC6: (self._cb_set_0_mhl, 2, [16], "----"), # SET 0, (HL)
+            # 0xC7: (self._cb_set_0_a,   2, [8],  "----"), # SET 0, A
+            # # SET 1, r8 / (HL)
+            # 0xC8: (self._cb_set_1_b,   2, [8],  "----"), # SET 1, B
+            # 0xC9: (self._cb_set_1_c,   2, [8],  "----"), # SET 1, C
+            # 0xCA: (self._cb_set_1_d,   2, [8],  "----"), # SET 1, D
+            # 0xCB: (self._cb_set_1_e,   2, [8],  "----"), # SET 1, E
+            # 0xCC: (self._cb_set_1_h,   2, [8],  "----"), # SET 1, H
+            # 0xCD: (self._cb_set_1_l,   2, [8],  "----"), # SET 1, L
+            # 0xCE: (self._cb_set_1_mhl, 2, [16], "----"), # SET 1, (HL)
+            # 0xCF: (self._cb_set_1_a,   2, [8],  "----"), # SET 1, A
+            # # SET 2, r8 / (HL)
+            # 0xD0: (self._cb_set_2_b,   2, [8],  "----"), # SET 2, B
+            # 0xD1: (self._cb_set_2_c,   2, [8],  "----"), # SET 2, C
+            # 0xD2: (self._cb_set_2_d,   2, [8],  "----"), # SET 2, D
+            # 0xD3: (self._cb_set_2_e,   2, [8],  "----"), # SET 2, E
+            # 0xD4: (self._cb_set_2_h,   2, [8],  "----"), # SET 2, H
+            # 0xD5: (self._cb_set_2_l,   2, [8],  "----"), # SET 2, L
+            # 0xD6: (self._cb_set_2_mhl, 2, [16], "----"), # SET 2, (HL)
+            # 0xD7: (self._cb_set_2_a,   2, [8],  "----"), # SET 2, A
+            # # SET 3, r8 / (HL)
+            # 0xD8: (self._cb_set_3_b,   2, [8],  "----"), # SET 3, B
+            # 0xD9: (self._cb_set_3_c,   2, [8],  "----"), # SET 3, C
+            # 0xDA: (self._cb_set_3_d,   2, [8],  "----"), # SET 3, D
+            # 0xDB: (self._cb_set_3_e,   2, [8],  "----"), # SET 3, E
+            # 0xDC: (self._cb_set_3_h,   2, [8],  "----"), # SET 3, H
+            # 0xDD: (self._cb_set_3_l,   2, [8],  "----"), # SET 3, L
+            # 0xDE: (self._cb_set_3_mhl, 2, [16], "----"), # SET 3, (HL)
+            # 0xDF: (self._cb_set_3_a,   2, [8],  "----"), # SET 3, A
+            # # SET 4, r8 / (HL)
+            # 0xE0: (self._cb_set_4_b,   2, [8],  "----"), # SET 4, B
+            # 0xE1: (self._cb_set_4_c,   2, [8],  "----"), # SET 4, C
+            # 0xE2: (self._cb_set_4_d,   2, [8],  "----"), # SET 4, D
+            # 0xE3: (self._cb_set_4_e,   2, [8],  "----"), # SET 4, E
+            # 0xE4: (self._cb_set_4_h,   2, [8],  "----"), # SET 4, H
+            # 0xE5: (self._cb_set_4_l,   2, [8],  "----"), # SET 4, L
+            # 0xE6: (self._cb_set_4_mhl, 2, [16], "----"), # SET 4, (HL)
+            # 0xE7: (self._cb_set_4_a,   2, [8],  "----"), # SET 4, A
+            # # SET 5, r8 / (HL)
+            # 0xE8: (self._cb_set_5_b,   2, [8],  "----"), # SET 5, B
+            # 0xE9: (self._cb_set_5_c,   2, [8],  "----"), # SET 5, C
+            # 0xEA: (self._cb_set_5_d,   2, [8],  "----"), # SET 5, D
+            # 0xEB: (self._cb_set_5_e,   2, [8],  "----"), # SET 5, E
+            # 0xEC: (self._cb_set_5_h,   2, [8],  "----"), # SET 5, H
+            # 0xED: (self._cb_set_5_l,   2, [8],  "----"), # SET 5, L
+            # 0xEE: (self._cb_set_5_mhl, 2, [16], "----"), # SET 5, (HL)
+            # 0xEF: (self._cb_set_5_a,   2, [8],  "----"), # SET 5, A
+            # # SET 6, r8 / (HL)
+            # 0xF0: (self._cb_set_6_b,   2, [8],  "----"), # SET 6, B
+            # 0xF1: (self._cb_set_6_c,   2, [8],  "----"), # SET 6, C
+            # 0xF2: (self._cb_set_6_d,   2, [8],  "----"), # SET 6, D
+            # 0xF3: (self._cb_set_6_e,   2, [8],  "----"), # SET 6, E
+            # 0xF4: (self._cb_set_6_h,   2, [8],  "----"), # SET 6, H
+            # 0xF5: (self._cb_set_6_l,   2, [8],  "----"), # SET 6, L
+            # 0xF6: (self._cb_set_6_mhl, 2, [16], "----"), # SET 6, (HL)
+            # 0xF7: (self._cb_set_6_a,   2, [8],  "----"), # SET 6, A
+            # # SET 7, r8 / (HL)
+            # 0xF8: (self._cb_set_7_b,   2, [8],  "----"), # SET 7, B
+            # 0xF9: (self._cb_set_7_c,   2, [8],  "----"), # SET 7, C
+            # 0xFA: (self._cb_set_7_d,   2, [8],  "----"), # SET 7, D
+            # 0xFB: (self._cb_set_7_e,   2, [8],  "----"), # SET 7, E
+            # 0xFC: (self._cb_set_7_h,   2, [8],  "----"), # SET 7, H
+            # 0xFD: (self._cb_set_7_l,   2, [8],  "----"), # SET 7, L
+            # 0xFE: (self._cb_set_7_mhl, 2, [16], "----"), # SET 7, (HL)
+            # 0xFF: (self._cb_set_7_a,   2, [8],  "----"), # SET 7, A
         }
 
         # ---  opCode Implementations --- #
@@ -1609,11 +1807,108 @@ class CPU(SingletonBase):
         return self._perform_rst(0x0038)
 
 
+    def _ld_ma16_a(self, operandAddr):
+        # Load the accumulator into the memory location pointed to by the 16-bit address in operandAddr
+        self.Memory.writeByte(self.CoreReg.A, operandAddr)
+        return None, None
 
+    def _ld_a_ma16(self, operandAddr):
+        # Load the value from the memory location pointed to by the 16-bit address in operandAddr into the accumulator
+        self.CoreReg.A = self.Memory.readByte(operandAddr)
+        return None, None
+    
 
+    def _ldh_a_mc(self, operandAddr):
+        # Load the value from the memory location pointed to by the address in the C register into the accumulator
+        targetAddr = 0xFF00 + self.CoreReg.C
 
+        self.CoreReg.A = self.Memory.readByte(targetAddr)
 
+        return None, None
+    
+    def _ldh_mc_a(self, operandAddr):
+        # Load the accumulator into the memory location pointed to by the address in the C register
+        targetAddr = 0xFF00 + self.CoreReg.C
 
+        self.Memory.writeByte(self.CoreReg.A, targetAddr)
+
+        return None, None
+    
+    def _ldh_a_ma8(self, operandAddr):
+        # Load the value from the memory location pointed to by the address in the operandAddr into the accumulator
+        targetAddr = 0xFF00 + operandAddr
+
+        self.CoreReg.A = self.Memory.readByte(targetAddr)
+
+        return None, None
+    
+    def _ldh_ma8_a(self, operandAddr):
+        # Load the accumulator into the memory location pointed to by the address in the operandAddr
+        targetAddr = 0xFF00 + operandAddr
+
+        self.Memory.writeByte(self.CoreReg.A, targetAddr)
+
+        return None, None
+    
+
+    def _ld_sp_hl(self, operandAddr):
+        # Load the value of the HL register pair into the stack pointer (SP)
+        self.CoreWords.SP = self.CoreWords.HL
+        return None, None
+
+    def _ld_hl_sp_r8(self, operandAddr):
+        # Load the value of the stack pointer (SP) plus a signed 8-bit value into the HL register pair
+        signed_value = np.int8(operandAddr)
+        self.CoreWords.HL = (self.CoreWords.SP + signed_value) & 0xFFFF
+
+        # Set flags
+        self.Flags.z = 0
+        self.Flags.n = 0
+        self.Flags.h = 1 if ((self.CoreWords.SP & 0x0F) + (signed_value & 0x0F)) > 0x0F else 0
+        self.Flags.c = 1 if ((self.CoreWords.SP & 0xFF00) + (signed_value & 0xFF00)) > 0xFF else 0
+
+        return None, None
+
+            # 0x37: (self._scf,           1,[ 4],       "-001"),
+            # 0x2F: (self._cpl,           1,[ 4],       "-11-"),
+            # 0x3F: (self._ccf,           1,[ 4],       "-00C"),
+
+    def _scf(self, operandAddr):
+        # Set the carry flag (C) to 1 and clear the half-carry flag (H)
+        self.Flags.c = 1
+        self.Flags.h = 0
+        self.Flags.n = 0
+        return None, None
+    
+    def _ccf(self, operandAddr):
+        # Complement the carry flag (C)
+        self.Flags.c = 1 if self.Flags.c == 0 else 0
+        self.Flags.h = 0
+        self.Flags.n = 0
+        return None, None
+    
+    def _cpl(self, operandAddr):
+        # Complement the accumulator (A) and set the half-carry flag (H)
+        self.CoreReg.A = ~self.CoreReg.A & 0xFF
+        self.Flags.h = 1
+        self.Flags.n = 1
+        return None, None
+    
+    def _halt(self, operandAddr):
+        # HALT the CPU until an interrupt occurs
+        self.Halted = True
+        return None, None
+    
+    def _di(self, operandAddr):
+        # Disable interrupts
+        self.InterruptsEnabled = False
+        return None, None
+    
+    def _ei(self, operandAddr):
+        # Enable interrupts
+        self.InterruptsEnabled = True
+        return None, None
+    
 
 
 

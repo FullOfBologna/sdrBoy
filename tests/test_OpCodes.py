@@ -529,6 +529,30 @@ class TestOpCodes:
         pytest.param("_rst_10h", 0x0150, 0xC002, 0x0010, 0xC000, 0x0151, 16, id="RST 10H: Different PC/SP"), # PC=0x0150 (ROM), SP=0xC002 (WRAM)
     ]
 
+    # Test cases for LDH instructions (using 0xFF00 + C or 0xFF00 + a8)
+    # Format: method_name, initial_c_or_a8, initial_a, initial_mem_value, expected_a, expected_mem_value, id
+    ldh_test_cases = [
+    # --- LDH A, (C) ---
+    pytest.param("_ldh_a_mc", 0x42, 0x00, 0x55, 0x55, 0x55, id="LDH A, (C): Basic Load"),
+    pytest.param("_ldh_a_mc", 0x00, 0xFF, 0xAA, 0xAA, 0xAA, id="LDH A, (C): C=0x00"),
+    pytest.param("_ldh_a_mc", 0xFF, 0x11, 0xBB, 0xBB, 0xBB, id="LDH A, (C): C=0xFF"),
+
+    # --- LDH (C), A ---
+    pytest.param("_ldh_mc_a", 0x43, 0x66, 0x00, 0x66, 0x66, id="LDH (C), A: Basic Store"),
+    pytest.param("_ldh_mc_a", 0x01, 0xCC, 0xFF, 0xCC, 0xCC, id="LDH (C), A: C=0x01"),
+    pytest.param("_ldh_mc_a", 0xFE, 0xDD, 0x11, 0xDD, 0xDD, id="LDH (C), A: C=0xFE"),
+
+    # --- LDH A, (a8) ---
+    pytest.param("_ldh_a_ma8", 0x50, 0x00, 0x77, 0x77, 0x77, id="LDH A, (a8): Basic Load, a8=0x50"),
+    pytest.param("_ldh_a_ma8", 0x00, 0xFF, 0x88, 0x88, 0x88, id="LDH A, (a8): a8=0x00"),
+    pytest.param("_ldh_a_ma8", 0xFF, 0x11, 0x99, 0x99, 0x99, id="LDH A, (a8): a8=0xFF"),
+
+    # --- LDH (a8), A ---
+    pytest.param("_ldh_ma8_a", 0x60, 0xEE, 0x00, 0xEE, 0xEE, id="LDH (a8), A: Basic Store, a8=0x60"),
+    pytest.param("_ldh_ma8_a", 0x02, 0x1A, 0xFF, 0x1A, 0x1A, id="LDH (a8), A: a8=0x02"),
+    pytest.param("_ldh_ma8_a", 0xFD, 0x2B, 0x11, 0x2B, 0x2B, id="LDH (a8), A: a8=0xFD"),
+]
+
     #==========================================
     #           TEST IMPLEMENTATIONS          
     #==========================================
@@ -1383,3 +1407,48 @@ class TestOpCodes:
         # Check the value pushed onto the stack (return address = PC + 1)
         stack_val = cpu.Memory.readWord(expected_sp)
         assert stack_val == expected_stack_val, f"Stack value at {expected_sp:04X} expected {expected_stack_val:04X}, got {stack_val:04X}"
+
+    @pytest.mark.parametrize("method_name, initial_c_or_a8, initial_a, initial_mem_value, expected_a, expected_mem_value", ldh_test_cases)
+    def test_ldh_instructions(self, cpu, method_name, initial_c_or_a8, initial_a, initial_mem_value, expected_a, expected_mem_value):
+        """Tests LDH instructions: LDH A,(C), LDH (C),A, LDH A,(a8), LDH (a8),A"""
+        # Arrange
+        cpu.CoreReg.A = initial_a
+        target_addr = 0xFF00 + initial_c_or_a8
+        cpu.Memory.writeByte(initial_mem_value, target_addr) # Pre-set memory value
+
+        operand = None # Default operand
+        if "_mc_" in method_name:
+            cpu.CoreReg.C = initial_c_or_a8 # Set C register if using (C) addressing
+        elif "_ma8_" in method_name:
+            # For (a8) addressing, the a8 value is the operand
+            operand = initial_c_or_a8
+            # Simulate fetching a8 from memory (though the method receives it directly)
+            # cpu.Memory.writeByte(initial_c_or_a8, cpu.CoreWords.PC + 1)
+
+        instruction_method = getattr(cpu, method_name)
+
+        # Act
+        pc_override, cycle_override = instruction_method(operand) # Pass a8 as operand if needed
+
+        # Assert
+        # Check Accumulator value (for loads into A)
+        if "_a_m" in method_name: # Methods like _ldh_a_mc or _ldh_a_ma8
+            assert cpu.CoreReg.A == expected_a, f"Accumulator A expected {expected_a:02X}, got {cpu.CoreReg.A:02X}"
+        else: # For stores from A, A should remain unchanged
+             assert cpu.CoreReg.A == initial_a, f"Accumulator A should be unchanged ({initial_a:02X}), got {cpu.CoreReg.A:02X}"
+
+        # Check Memory value (for stores from A)
+        final_mem_value = cpu.Memory.readByte(target_addr)
+        if "_m_a" in method_name: # Methods like _ldh_mc_a or _ldh_ma8_a
+            assert final_mem_value == expected_mem_value, f"Memory at {target_addr:04X} expected {expected_mem_value:02X}, got {final_mem_value:02X}"
+        else: # For loads into A, memory should remain unchanged
+            assert final_mem_value == initial_mem_value, f"Memory at {target_addr:04X} should be unchanged ({initial_mem_value:02X}), got {final_mem_value:02X}"
+
+
+        # Check C register is unchanged (it's only used for address calculation)
+        if "_mc_" in method_name:
+            assert cpu.CoreReg.C == initial_c_or_a8, f"Register C should be unchanged ({initial_c_or_a8:02X}), got {cpu.CoreReg.C:02X}"
+
+        assert pc_override is None, "PC override should be None"
+        # Cycle override might vary (8 for loads, 12 for stores with a8), check specific instruction details if needed
+        # assert cycle_override is None, "Cycle override should be None"

@@ -326,24 +326,24 @@ class CPU(SingletonBase):
 
         self.cb_prefix_table = {
             # RLC r8 / (HL)
-            # 0x00: (self._cb_rlc_b,   2, [8],  "Z00C"), # RLC B
-            # 0x01: (self._cb_rlc_c,   2, [8],  "Z00C"), # RLC C
-            # 0x02: (self._cb_rlc_d,   2, [8],  "Z00C"), # RLC D
-            # 0x03: (self._cb_rlc_e,   2, [8],  "Z00C"), # RLC E
-            # 0x04: (self._cb_rlc_h,   2, [8],  "Z00C"), # RLC H
-            # 0x05: (self._cb_rlc_l,   2, [8],  "Z00C"), # RLC L
-            # 0x06: (self._cb_rlc_mhl, 2, [16], "Z00C"), # RLC (HL)
-            # 0x07: (self._cb_rlc_a,   2, [8],  "Z00C"), # RLC A
-            # # RRC r8 / (HL)
-            # 0x08: (self._cb_rrc_b,   2, [8],  "Z00C"), # RRC B
-            # 0x09: (self._cb_rrc_c,   2, [8],  "Z00C"), # RRC C
-            # 0x0A: (self._cb_rrc_d,   2, [8],  "Z00C"), # RRC D
-            # 0x0B: (self._cb_rrc_e,   2, [8],  "Z00C"), # RRC E
-            # 0x0C: (self._cb_rrc_h,   2, [8],  "Z00C"), # RRC H
-            # 0x0D: (self._cb_rrc_l,   2, [8],  "Z00C"), # RRC L
-            # 0x0E: (self._cb_rrc_mhl, 2, [16], "Z00C"), # RRC (HL)
-            # 0x0F: (self._cb_rrc_a,   2, [8],  "Z00C"), # RRC A
-            # # RL r8 / (HL)
+            0x00: (self._cb_rlc_b,   2, [8],  "Z00C"), # RLC B
+            0x01: (self._cb_rlc_c,   2, [8],  "Z00C"), # RLC C
+            0x02: (self._cb_rlc_d,   2, [8],  "Z00C"), # RLC D
+            0x03: (self._cb_rlc_e,   2, [8],  "Z00C"), # RLC E
+            0x04: (self._cb_rlc_h,   2, [8],  "Z00C"), # RLC H
+            0x05: (self._cb_rlc_l,   2, [8],  "Z00C"), # RLC L
+            0x06: (self._cb_rlc_mhl, 2, [16], "Z00C"), # RLC (HL)
+            0x07: (self._cb_rlc_a,   2, [8],  "Z00C"), # RLC A
+            # RRC r8 / (HL)
+            0x08: (self._cb_rrc_b,   2, [8],  "Z00C"), # RRC B
+            0x09: (self._cb_rrc_c,   2, [8],  "Z00C"), # RRC C
+            0x0A: (self._cb_rrc_d,   2, [8],  "Z00C"), # RRC D
+            0x0B: (self._cb_rrc_e,   2, [8],  "Z00C"), # RRC E
+            0x0C: (self._cb_rrc_h,   2, [8],  "Z00C"), # RRC H
+            0x0D: (self._cb_rrc_l,   2, [8],  "Z00C"), # RRC L
+            0x0E: (self._cb_rrc_mhl, 2, [16], "Z00C"), # RRC (HL)
+            0x0F: (self._cb_rrc_a,   2, [8],  "Z00C"), # RRC A
+            # RL r8 / (HL)
             # 0x10: (self._cb_rl_b,    2, [8],  "Z00C"), # RL B
             # 0x11: (self._cb_rl_c,    2, [8],  "Z00C"), # RL C
             # 0x12: (self._cb_rl_d,    2, [8],  "Z00C"), # RL D
@@ -1909,6 +1909,121 @@ class CPU(SingletonBase):
         self.InterruptsEnabled = True
         return None, None
     
+
+#======================================================================
+# CB Prefix Instructions
+#======================================================================
+    
+    def _rlc_r8(self, register):
+        # Rotate the provided 8-bit register left through carry
+        original = register
+        register = ((original << 1) | (original >> 7)) & 0xFF
+
+        # Set flags
+        self.Flags.z = 1 if register == 0 else 0
+        self.Flags.n = 0
+        self.Flags.h = 0
+        self.Flags.c = 1 if original & 0x80 else 0
+
+        return register
+
+    def _cb_rlc_b(self, operandAddr):
+        # Rotate the B register left through carry
+        self.CoreReg.B = self._rlc_r8(self.CoreReg.B)
+        return None, None
+    
+    def _cb_rlc_c(self, operandAddr):
+        # Rotate the C register left through carry
+        self.CoreReg.C = self._rlc_r8(self.CoreReg.C)
+        return None, None
+    
+    def _cb_rlc_d(self, operandAddr):
+        # Rotate the D register left through carry
+        self.CoreReg.D = self._rlc_r8(self.CoreReg.D)
+        return None, None
+    
+    def _cb_rlc_e(self, operandAddr):
+        # Rotate the E register left through carry
+        self.CoreReg.E = self._rlc_r8(self.CoreReg.E)
+        return None, None
+    
+    def _cb_rlc_h(self, operandAddr):
+        # Rotate the H register left through carry
+        self.CoreReg.H = self._rlc_r8(self.CoreReg.H)
+        return None, None
+    
+    def _cb_rlc_l(self, operandAddr):
+        # Rotate the L register left through carry
+        self.CoreReg.L = self._rlc_r8(self.CoreReg.L)
+        return None, None
+    
+    def _cb_rlc_mhl(self, operandAddr):
+        original = self.Memory.readByte(self.CoreWords.HL)
+        result = self._rlc_r8(original)
+        self.Memory.writeByte(result, self.CoreWords.HL)
+
+        return None, None
+    
+    def _cb_rlc_a(self, operandAddr):
+        # Rotate the A register left through carry
+        self.CoreReg.A = self._rlc_r8(self.CoreReg.A)
+        return None, None
+    
+    def _rrc_r8(self, register):
+        # Rotate the provided 8-bit register right through carry
+        original = register
+        register = ((original >> 1) | (original << 7)) & 0xFF
+
+        # Set flags
+        self.Flags.z = 1 if register == 0 else 0
+        self.Flags.n = 0
+        self.Flags.h = 0
+        self.Flags.c = 1 if original & 0x01 else 0
+
+        return register
+    
+    def _cb_rrc_b(self, operandAddr):
+        # Rotate the B register right through carry
+        self.CoreReg.B = self._rrc_r8(self.CoreReg.B)
+        return None, None
+    
+    def _cb_rrc_c(self, operandAddr):
+        # Rotate the C register right through carry
+        self.CoreReg.C = self._rrc_r8(self.CoreReg.C)
+        return None, None
+    
+    def _cb_rrc_d(self, operandAddr):
+        # Rotate the D register right through carry
+        self.CoreReg.D = self._rrc_r8(self.CoreReg.D)
+        return None, None
+    
+    def _cb_rrc_e(self, operandAddr):
+        # Rotate the E register right through carry
+        self.CoreReg.E = self._rrc_r8(self.CoreReg.E)
+        return None, None
+    
+    def _cb_rrc_h(self, operandAddr):
+        # Rotate the H register right through carry
+        self.CoreReg.H = self._rrc_r8(self.CoreReg.H)
+        return None, None
+    
+    def _cb_rrc_l(self, operandAddr):
+        # Rotate the L register right through carry
+        self.CoreReg.L = self._rrc_r8(self.CoreReg.L)
+        return None, None
+    
+    def _cb_rrc_mhl(self, operandAddr):
+        original = self.Memory.readByte(self.CoreWords.HL)
+        result = self._rrc_r8(original)
+        self.Memory.writeByte(result, self.CoreWords.HL)
+        return None, None
+    
+    def _cb_rrc_a(self, operandAddr):
+        # Rotate the A register right through carry
+        self.CoreReg.A = self._rrc_r8(self.CoreReg.A)
+        return None, None
+    
+
 
 
 

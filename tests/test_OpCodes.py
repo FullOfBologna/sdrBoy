@@ -553,6 +553,69 @@ class TestOpCodes:
     pytest.param("_ldh_ma8_a", 0xFD, 0x2B, 0x11, 0x2B, 0x2B, id="LDH (a8), A: a8=0xFD"),
 ]
 
+
+    #==========================================
+    #          CB PREFIX TEST CASES
+    #==========================================
+
+    # Test cases for _rlc_r8 helper
+    # Format: initial_value, expected_result, expected_flags (ZNHC), id
+    rlc_r8_test_cases = [
+        pytest.param(0x85, 0x0B, "0001", id="RLC 0x85 -> 0x0B, C=1"), # Bit 7 = 1
+        pytest.param(0x01, 0x02, "0000", id="RLC 0x01 -> 0x02, C=0"), # Bit 7 = 0
+        pytest.param(0x80, 0x01, "0001", id="RLC 0x80 -> 0x01, C=1"), # Edge case high bit
+        pytest.param(0x00, 0x00, "1000", id="RLC 0x00 -> 0x00, Z=1, C=0"), # Zero case
+        pytest.param(0xFF, 0xFF, "0001", id="RLC 0xFF -> 0xFF, C=1"), # All ones
+        pytest.param(0x4A, 0x94, "0000", id="RLC 0x4A -> 0x94, C=0"), # Mid-range value
+    ]
+
+    # Test cases for _rrc_r8 helper
+    # Format: initial_value, expected_result, expected_flags (ZNHC), id
+    rrc_r8_test_cases = [
+        pytest.param(0x01, 0x80, "0001", id="RRC 0x01 -> 0x80, C=1"), # Bit 0 = 1
+        pytest.param(0x0A, 0x05, "0000", id="RRC 0x0A -> 0x05, C=0"), # Bit 0 = 0
+        pytest.param(0x01, 0x80, "0001", id="RRC 0x01 -> 0x80, C=1"), # Edge case low bit (duplicate for clarity)
+        pytest.param(0x00, 0x00, "1000", id="RRC 0x00 -> 0x00, Z=1, C=0"), # Zero case
+        pytest.param(0xFF, 0xFF, "0001", id="RRC 0xFF -> 0xFF, C=1"), # All ones
+        pytest.param(0x95, 0xCA, "0001", id="RRC 0x95 -> 0xCA, C=1"), # Mid-range value
+    ]
+
+    # Manually expanded Test cases for CB RLC instructions
+    cb_rlc_test_cases = []
+    _registers = ["B", "C", "D", "E", "H", "L", "A"]
+    for _reg in _registers:
+        for _param in rlc_r8_test_cases:
+            _val, _res, _flags = _param.values
+            _tid = _param.id
+            cb_rlc_test_cases.append(pytest.param(
+                f"_cb_rlc_{_reg.lower()}", _reg, _val, _res, _flags, id=f"RLC {_reg}: {_tid}"
+            ))
+    for _param in rlc_r8_test_cases:
+        _val, _res, _flags = _param.values
+        _tid = _param.id
+        cb_rlc_test_cases.append(pytest.param(
+            "_cb_rlc_mhl", "mhl", _val, _res, _flags, id=f"RLC (HL): {_tid}"
+        ))
+
+    # Manually expanded Test cases for CB RRC instructions
+    cb_rrc_test_cases = []
+    # _registers list defined above
+    for _reg in _registers:
+        for _param in rrc_r8_test_cases:
+            _val, _res, _flags = _param.values
+            _tid = _param.id
+            cb_rrc_test_cases.append(pytest.param(
+                f"_cb_rrc_{_reg.lower()}", _reg, _val, _res, _flags, id=f"RRC {_reg}: {_tid}"
+            ))
+    for _param in rrc_r8_test_cases:
+        _val, _res, _flags = _param.values
+        _tid = _param.id
+        cb_rrc_test_cases.append(pytest.param(
+            "_cb_rrc_mhl", "mhl", _val, _res, _flags, id=f"RRC (HL): {_tid}"
+        ))
+
+
+
     #==========================================
     #           TEST IMPLEMENTATIONS          
     #==========================================
@@ -1452,3 +1515,87 @@ class TestOpCodes:
         assert pc_override is None, "PC override should be None"
         # Cycle override might vary (8 for loads, 12 for stores with a8), check specific instruction details if needed
         # assert cycle_override is None, "Cycle override should be None"
+
+    @pytest.mark.parametrize("method_name, register_name, initial_value, expected_result, expected_flags", cb_rlc_test_cases)
+    def test_cb_rlc_instructions(self, cpu, method_name, register_name, initial_value, expected_result, expected_flags):
+        """Tests the CB-prefixed RLC instructions (RLC r8, RLC (HL))."""
+        # Arrange
+        instruction_method = getattr(cpu, method_name)
+        target_hl_addr = 0xC5A1 # Example address for (HL) tests
+
+        # Set initial value in register or memory
+        if register_name == "mhl":
+            cpu.CoreWords.HL = target_hl_addr
+            cpu.Memory.writeByte(initial_value, target_hl_addr)
+        else:
+            setattr(cpu.CoreReg, register_name, initial_value)
+
+        # Set initial flags (opposite of expected where possible)
+        cpu.Flags.z = 1 if expected_flags[0] == '0' else 0
+        cpu.Flags.n = 1 # Expected N is always 0
+        cpu.Flags.h = 1 # Expected H is always 0
+        cpu.Flags.c = 1 if expected_flags[3] == '0' else 0
+
+        # Act
+        pc_override, cycle_override = instruction_method(None) # operandAddr not used by CB rotate
+
+        # Assert
+        # Check result in register or memory
+        if register_name == "mhl":
+            final_value = cpu.Memory.readByte(target_hl_addr)
+            assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
+        else:
+            final_value = getattr(cpu.CoreReg, register_name)
+            assert final_value == expected_result, f"{method_name}: Expected {register_name}={expected_result:02X}, got {final_value:02X}"
+
+        # Check flags
+        assert cpu.Flags.z == int(expected_flags[0]), f"{method_name}: Expected Z={expected_flags[0]}, got {cpu.Flags.z}"
+        assert cpu.Flags.n == int(expected_flags[1]), f"{method_name}: Expected N={expected_flags[1]}, got {cpu.Flags.n}"
+        assert cpu.Flags.h == int(expected_flags[2]), f"{method_name}: Expected H={expected_flags[2]}, got {cpu.Flags.h}"
+        assert cpu.Flags.c == int(expected_flags[3]), f"{method_name}: Expected C={expected_flags[3]}, got {cpu.Flags.c}"
+
+        # Check return values
+        assert pc_override is None, f"{method_name}: PC override should be None"
+        assert cycle_override is None, f"{method_name}: Cycle override should be None"
+
+    @pytest.mark.parametrize("method_name, register_name, initial_value, expected_result, expected_flags", cb_rrc_test_cases)
+    def test_cb_rrc_instructions(self, cpu, method_name, register_name, initial_value, expected_result, expected_flags):
+        """Tests the CB-prefixed RRC instructions (RRC r8, RRC (HL))."""
+        # Arrange
+        instruction_method = getattr(cpu, method_name)
+        target_hl_addr = 0xD6B2 # Example address for (HL) tests
+
+        # Set initial value in register or memory
+        if register_name == "mhl":
+            cpu.CoreWords.HL = target_hl_addr
+            cpu.Memory.writeByte(initial_value, target_hl_addr)
+        else:
+            setattr(cpu.CoreReg, register_name, initial_value)
+
+        # Set initial flags (opposite of expected where possible)
+        cpu.Flags.z = 1 if expected_flags[0] == '0' else 0
+        cpu.Flags.n = 1 # Expected N is always 0
+        cpu.Flags.h = 1 # Expected H is always 0
+        cpu.Flags.c = 1 if expected_flags[3] == '0' else 0
+
+        # Act
+        pc_override, cycle_override = instruction_method(None) # operandAddr not used by CB rotate
+
+        # Assert
+        # Check result in register or memory
+        if register_name == "mhl":
+            final_value = cpu.Memory.readByte(target_hl_addr)
+            assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
+        else:
+            final_value = getattr(cpu.CoreReg, register_name)
+            assert final_value == expected_result, f"{method_name}: Expected {register_name}={expected_result:02X}, got {final_value:02X}"
+
+        # Check flags
+        assert cpu.Flags.z == int(expected_flags[0]), f"{method_name}: Expected Z={expected_flags[0]}, got {cpu.Flags.z}"
+        assert cpu.Flags.n == int(expected_flags[1]), f"{method_name}: Expected N={expected_flags[1]}, got {cpu.Flags.n}"
+        assert cpu.Flags.h == int(expected_flags[2]), f"{method_name}: Expected H={expected_flags[2]}, got {cpu.Flags.h}"
+        assert cpu.Flags.c == int(expected_flags[3]), f"{method_name}: Expected C={expected_flags[3]}, got {cpu.Flags.c}"
+
+        # Check return values
+        assert pc_override is None, f"{method_name}: PC override should be None"
+        assert cycle_override is None, f"{method_name}: Cycle override should be None"

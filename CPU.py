@@ -26,6 +26,14 @@ class CPU(SingletonBase):
         self.CoreWords = RegWord(self.CoreReg,self.Flags)
         self._initialized = True
         self.lr35902_opCodes = {}
+        self.IE_ADDR = 0xFFFF # Interrupt Enable Register address
+        self.IF_ADDR = 0xFF0F # Interrupt Flag Register
+        # Interrupt Handling and Flags
+
+        self.IME = False # Interrupt Master Enable Flag
+        self._ie = 0x00 # Interrupt Enable Register
+        self._if = 0x00 # Interrupt Flag Register
+        
         self.init_opCodes()
 
         self.cycles = 0
@@ -62,6 +70,17 @@ class CPU(SingletonBase):
 
             #Return number of cycles taken
             return actualCycles
+
+    # def interruptHandler(self, interruptByte):
+    #     # # Check if IME is enabled
+    #     # if self.IME:
+    #     #     # Set the IF register to indicate the interrupt has occurred
+    #     #     self._if |= interruptByte
+
+    #     #     # Check if the interrupt is enabled in the IE register
+    #     #     if (self._ie & interruptByte) != 0:
+    #     #         # Handle the interrupt (e.g., call the appropriate ISR)
+    #     #         self.handle_interrupt(interruptByte)
 
     # Maps opcode hex value to a tuple: (handler_method, instruction_length_bytes, base_cycles)
     def init_opCodes(self):

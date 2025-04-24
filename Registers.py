@@ -26,6 +26,8 @@ class Flag(SingletonBase):
         self._c = 1
         self._flag = Byte(self.z << 7 | self.n << 6 | self.h << 5 | self.c << 4)
         self._initialized = True
+
+  
     
     def flagReset(self):
         self._flag = 0x00
@@ -261,3 +263,89 @@ class RegWord(SingletonBase):
         self.byte.H = (word & 0xFF00) >> 8
         self.byte.L = (word & 0xFF)
         self._HL = (self.byte.H  << 8) | self.byte.L
+
+class InterruptMask(SingletonBase):
+    _initialized = False # Flag to ensure __init__ runs only once
+
+    def __init__(self):
+        # Initialization Guard
+        if hasattr(self, '_initialized') and self._initialized:
+            print(f"... Skipping Flag __init__ due to existing initialization {id(self)}")
+            return
+
+        print(f"Iniitalizing Flag instance {id(self)}")
+
+        self._ime = 0
+        self._initialized = True
+
+        self.VBLANK_POS = 0x01
+        self.LCD_STAT_POS = 0x02
+        self.TIMER_POS = 0x04
+        self.SERIAL_POS = 0x08
+        self.JOYPAD_POS = 0x10
+
+        self._IE = 0x00
+        self._IF = 0x01
+        self._vblank = 0
+        self._lcd_stat = 0
+        self._timer = 0
+        self._serial = 0
+        self._joypad = 0
+
+    @property
+    def IME(self):
+        return self._ime
+    @IME.setter
+    def IME(self, bit):
+        if not (bit == 1 or bit == 0):
+            raise ValueError(f"bit = {bit}: Bit must be [0|1]")
+        self._ime = bit
+
+    @property
+    def vblank(self):
+        return (self._IF & self.VBLANK_POS) >> 0
+    @vblank.setter
+    def vblank(self, bit):
+        if not (bit == 1 or bit == 0):
+            raise ValueError(f"bit = {bit}: Bit must be [0|1]")
+        self._vblank = bit
+
+    @property
+    def lcd_stat(self):
+        return (self._IF & self.LCD_STAT_POS) >> 1
+    @lcd_stat.setter
+    def lcd_stat(self, bit):
+        if not (bit == 1 or bit == 0):
+            raise ValueError(f"bit = {bit}: Bit must be [0|1]")
+        self._lcd_stat = bit
+
+    @property
+    def timer(self):
+        return (self._timer & self.TIMER_POS) >> 2
+    @timer.setter
+    def timer(self, bit):
+        if not (bit == 1 or bit == 0):
+            raise ValueError(f"bit = {bit}: Bit must be [0|1]")
+        self._timer = bit
+
+    @property
+    def serial(self):
+        return (self._serial & self.SERIAL_POS) >> 3
+    @serial.setter
+    def serial(self, bit):
+        if not (bit == 1 or bit == 0):
+            raise ValueError(f"bit = {bit}: Bit must be [0|1]")
+        self._serial = bit
+
+    @property
+    def joypad(self):
+        return (self._joypad & self.JOYPAD_POS) >> 4
+    @joypad.setter
+    def joypad(self, bit):
+        if not (bit == 1 or bit == 0):
+            raise ValueError(f"bit = {bit}: Bit must be [0|1]")
+        self._joypad = bit
+
+    
+
+    

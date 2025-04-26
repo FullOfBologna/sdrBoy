@@ -3,6 +3,7 @@ from SingletonBase import *
 from Registers import RegByte
 from Registers import RegWord
 from Registers import Flag
+from Registers import InterruptMask
 import numpy as np
 
 
@@ -24,16 +25,12 @@ class CPU(SingletonBase):
         self.CoreReg = RegByte()
         self.Flags = Flag()
         self.CoreWords = RegWord(self.CoreReg,self.Flags)
-        self._initialized = True
-        self.lr35902_opCodes = {}
-        self.IE_ADDR = 0xFFFF # Interrupt Enable Register address
-        self.IF_ADDR = 0xFF0F # Interrupt Flag Register
-        # Interrupt Handling and Flags
+        self.InterruptMask = InterruptMask()
 
-        self.IME = False # Interrupt Master Enable Flag
-        self._ie = 0x00 # Interrupt Enable Register
-        self._if = 0x00 # Interrupt Flag Register
-        
+        self._initialized = True
+        self.scheduleIMEEnabled = False 
+        self.lr35902_opCodes = {}
+
         self.init_opCodes()
 
         self.cycles = 0
@@ -71,17 +68,22 @@ class CPU(SingletonBase):
             #Return number of cycles taken
             return actualCycles
 
-    # def interruptHandler(self, interruptByte):
-    #     # # Check if IME is enabled
-    #     # if self.IME:
-    #     #     # Set the IF register to indicate the interrupt has occurred
-    #     #     self._if |= interruptByte
+    # Call interrupt handler at the end of each execution of step
+    def interruptHandler(self, interruptByte):
+        # # Check if IME is scheduled to be enabled
+        if self.scheduleIMEEnabled:
+            self.InterruptMask.IME = 1
+            self.scheduleIMEEnabled = False
 
-    #     #     # Check if the interrupt is enabled in the IE register
-    #     #     if (self._ie & interruptByte) != 0:
-    #     #         # Handle the interrupt (e.g., call the appropriate ISR)
-    #     #         self.handle_interrupt(interruptByte)
+            return # Do not process interrupt if IME is scheduled to be enabled wait for cycle delay to begin processing interrupts
+        
+        ie_reg = self.InterruptMask._IE
+        if_reg = self.InterruptMask._IF
 
+        
+
+        
+ 
     # Maps opcode hex value to a tuple: (handler_method, instruction_length_bytes, base_cycles)
     def init_opCodes(self):
         self.lr35902_opCodes = {
@@ -1920,12 +1922,15 @@ class CPU(SingletonBase):
     
     def _di(self, operandAddr):
         # Disable interrupts
-        self.InterruptsEnabled = False
+        self.scheduleIMEEnabled = False
+        self.InterruptMask.IME = 0
         return None, None
     
     def _ei(self, operandAddr):
-        # Enable interrupts
-        self.InterruptsEnabled = True
+        # Enable interrupts and schedule the IME flag to be set after this instruction
+        # completes. 
+        # This is to ensure that the EI instruction does not take effect until the next instruction.
+        self.scheduleIMEEnabled = True
         return None, None
     
 

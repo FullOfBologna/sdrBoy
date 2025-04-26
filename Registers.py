@@ -302,6 +302,11 @@ class InterruptMask(SingletonBase):
         self._ime = bit
 
     @property
+    def IE(self):
+        self._IE = readByte(0xFFFF)
+        return self._IE
+
+    @property
     def vblank(self):
         return (self._IF & self.VBLANK_POS) >> 0
     @vblank.setter
@@ -345,7 +350,5 @@ class InterruptMask(SingletonBase):
         if not (bit == 1 or bit == 0):
             raise ValueError(f"bit = {bit}: Bit must be [0|1]")
         self._joypad = bit
-
-    
 
     

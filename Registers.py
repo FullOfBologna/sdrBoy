@@ -267,7 +267,7 @@ class RegWord(SingletonBase):
 class InterruptMask(SingletonBase):
     _initialized = False # Flag to ensure __init__ runs only once
 
-    def __init__(self):
+    def __init__(self, memoryInstance):
         # Initialization Guard
         if hasattr(self, '_initialized') and self._initialized:
             print(f"... Skipping Flag __init__ due to existing initialization {id(self)}")
@@ -275,6 +275,7 @@ class InterruptMask(SingletonBase):
 
         print(f"Iniitalizing Flag instance {id(self)}")
 
+        self.memory = memoryInstance
         self._ime = 0
         self._initialized = True
 
@@ -303,8 +304,23 @@ class InterruptMask(SingletonBase):
 
     @property
     def IE(self):
-        self._IE = readByte(0xFFFF)
+        self._IE = self.memory.readByte(0xFFFF)
         return self._IE
+
+    @IE.setter
+    def IE(self, byte):
+        self._IE = byte
+        self.memory.writeByte(byte, 0xFFFF)
+
+    @property
+    def IF(self):
+        self._IF = self.memory.readByte(0xFF0F)
+        return self._IF
+    @IF.setter
+    def IF(self, byte):
+        self._IF = byte
+        self.memory.writeByte(byte, 0xFF0F)
+
 
     @property
     def vblank(self):

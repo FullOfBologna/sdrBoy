@@ -80,8 +80,36 @@ class CPU(SingletonBase):
         ie_reg = self.InterruptMask._IE
         if_reg = self.InterruptMask._IF
 
-        
+        # Interrupt priorities and their handler addresses
+        interrupt_priorities = [
+            (self.InterruptMask.VBLANK_POS, 0x40),  # VBLANK
+            (self.InterruptMask.LCD_STAT_POS, 0x48),  # LCD STAT
+            (self.InterruptMask.TIMER_POS, 0x50),  # TIMER
+            (self.InterruptMask.SERIAL_POS, 0x58),  # SERIAL
+            (self.InterruptMask.JOYPAD_POS, 0x60),  # JOYPAD
+        ]
 
+        pendingAndEnable = ie_reg & if_reg
+        if pendingAndEnable == 0:
+            return
+        
+        for interruptBit, handlerAddress in interrupt_priorities:
+            if (pendingAndEnable & interruptBit) != 0:
+                # Clear the interrupt flag
+                if_reg &= ~interruptBit
+                self.InterruptMask._IF = if_reg
+
+                # Push the current PC onto the stack
+                self.Memory.writeWord(self.CoreWords.SP, self.CoreWords.SP - 2)
+                self.Memory.writeWord(self.CoreWords.PC, self.CoreWords.SP)
+
+                # Set the PC to the handler address
+                self.CoreWords.PC = handlerAddress
+
+                # Set IME to 0 to disable further interrupts until re-enabled
+                self.InterruptMask.IME = 0
+
+                break
         
  
     # Maps opcode hex value to a tuple: (handler_method, instruction_length_bytes, base_cycles)

@@ -25,7 +25,7 @@ class CPU(SingletonBase):
         self.CoreReg = RegByte()
         self.Flags = Flag()
         self.CoreWords = RegWord(self.CoreReg,self.Flags)
-        self.InterruptMask = InterruptMask()
+        self.InterruptMask = InterruptMask(self.Memory)
 
         self._initialized = True
         self.scheduleIMEEnabled = False 
@@ -2075,12 +2075,3 @@ class CPU(SingletonBase):
         self.CoreReg.A = self._rrc_r8(self.CoreReg.A)
         return None, None
     
-
-
-
-
-
-
-
-
-

@@ -416,7 +416,7 @@ class TestOpCodes:
         pytest.param(0x00, 0x00, 0x00, "1100", id="CP A, r8: Zero vs Zero (Z=1)"),
         pytest.param(0x10, 0x08, 0x10, "0110", id="CP A, r8: Half Borrow (H=1)"),
         pytest.param(0x0F, 0x10, 0x0F, "0101", id="CP A, r8: Less, Borrow (C=1)"),
-        pytest.param(0x55, 0xAA, 0x55, "0101", id="CP A, r8: Less, Borrow (C=1), No Half Borrow"),
+        pytest.param(0x55, 0xA2, 0x55, "0101", id="CP A, r8: Less, Borrow (C=1), No Half Borrow"),
         pytest.param(0xAA, 0x55, 0xAA, "0100", id="CP A, r8: Greater, No Borrow, No Half Borrow"),
     ]
 

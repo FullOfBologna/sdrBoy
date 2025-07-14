@@ -324,7 +324,7 @@ class InterruptMask(SingletonBase):
 
     @property
     def vblank(self):
-        return (self._IF & self.VBLANK_POS) >> 0
+        return (self._IF & self.VBLANK_POS)
     @vblank.setter
     def vblank(self, bit):
         if not (bit == 1 or bit == 0):

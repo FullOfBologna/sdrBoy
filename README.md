@@ -2,7 +2,7 @@
 This is a project inspired by the (GBDSO)[https://www.mikrocontroller.net/attachment/7239/gbdso_uk.pdf] project by Steve Willis in 2000. 
 
 First, I am implementing a python based GameBoy emulator as a 2 fold learning opportunity. I want to learn python more in depth, and I want to learn the ins and out of the Game Boy and development in Assembly. 
-
+e
 (I understand I will likely eventually run into performance issues and will need to switch to hardware) 
 I am targetting learning only the earliest model of the game boy to start. End goal would be to implement this hardware on a gameboy color.
 

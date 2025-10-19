@@ -29,6 +29,8 @@ class CPU(SingletonBase):
 
         self._initialized = True
         self.scheduleIMEEnabled = False 
+        self.Halted = False
+        self.Stopped = False
         self.lr35902_opCodes = {}
 
         self.init_opCodes()
@@ -36,8 +38,26 @@ class CPU(SingletonBase):
         self.cycles = 0
 
     def step(self):
-        # Get Current OpCode from memory, via the program counter. 
+        # Handle Stopped State first
+        if self.Stopped:
+            # The CPU is in a low-power state and does nothing until a Joypad
+            # button press wakes it up. The main emulation loop is responsible
+            # for detecting this and setting self.Stopped = False.
+            # We consume a minimal number of cycles to keep timing consistent.
+            self.cycles += 4
+            return 4
 
+        # Handle Halted State first
+        if self.Halted:
+            # Check for pending interrupts to exit HALT
+            if (self.InterruptMask.IE & self.InterruptMask.IF) != 0:
+                self.Halted = False
+            else:
+                # Remain halted, consume 4 cycles
+                self.cycles += 4
+                return 4
+        
+        # Get Current OpCode from memory, via the program counter. 
         currentPC = self.CoreWords.PC
 
         opCode = self.Memory.readByte(currentPC)
@@ -95,6 +115,15 @@ class CPU(SingletonBase):
         
         for interruptBit, handlerAddress in interrupt_priorities:
             if (pendingAndEnable & interruptBit) != 0:
+
+                self.Halted = False  # Exit HALT state if in it
+
+                if self.Stopped and (interruptBit == self.InterruptMask.JOYPAD_POS):
+                    self.Stopped = False  # Exit STOP state on JOYPAD interrupt
+
+                if self.Stopped:
+                    return  # Do not process other interrupts if in STOP state
+
                 # Clear the interrupt flag
                 if_reg &= ~interruptBit
                 self.InterruptMask._IF = if_reg
@@ -1002,8 +1031,11 @@ class CPU(SingletonBase):
         return None, None
 
     def _stop_0(self,operandAddr):
-        # TODO: Implement this
-        pass
+        # STOP the CPU and screen until a button is pressed.
+        # This is a 2-byte instruction, the step function will advance PC by 2.
+        self.Stopped = True
+        # TODO: The PPU should also be notified to turn off the LCD.
+        return None, None
 
     # jump related to provided 8 bit signed value
     #   PC <-- PC + signed 8-bit value
@@ -1945,9 +1977,26 @@ class CPU(SingletonBase):
     
     def _halt(self, operandAddr):
         # HALT the CPU until an interrupt occurs
-        self.Halted = True
+        if self.InterruptMask.IME == 1:
+            self.Halted = True
+        else:
+            # Check for HALT bug
+            if (self.InterruptMask.IE & self.InterruptMask.IF) != 0:
+                # HALT bug: PC fails to increment.
+                # To emulate, we'll just execute the next instruction by not halting
+                # and letting the PC increment normally in the step function.
+                # The bug effectively makes HALT a NOP in this case.
+                pass
+            else:
+                # IME is 0 and no pending interrupts, halt normally.
+                self.Halted = True
         return None, None
     
+    def _stop(self, operandAddr):
+        # STOP the CPU (implementation may vary)
+        self.Stopped = True
+        return None, None
+
     def _di(self, operandAddr):
         # Disable interrupts
         self.scheduleIMEEnabled = False

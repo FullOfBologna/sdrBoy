@@ -34,7 +34,7 @@ class Flag(SingletonBase):
 
     @property
     def F(self):
-        self._flag = Byte(self.c << 7 | self.h << 6 | self.n << 5 | self.z << 4)
+        self._flag = Byte(self.z << 7 | self.n << 6 | self.h << 5 | self.c << 4)
         # print(f"{self.F}")
         return self._flag
 
@@ -100,14 +100,14 @@ class RegByte(SingletonBase):
         print(f"Iniitalizing RegByte instance {id(self)}")
         print(f"Initializing to magical post boot ROM values.")
         self._initialized = True
+        self._A = Byte(0X01)
         self._B = Byte(0x00)
         self._C = Byte(0x13)
         self._D = Byte(0x00)
         self._E = Byte(0xD8)
         self._H = Byte(0x01)
         self._L = Byte(0x4D)
-        self._HL = Word(self.H << 8 | self.L)
-        self._A = Byte(1)
+        # self._HL = Word(self.H << 8 | self.L)
     
     @property    
     def A(self):
@@ -179,13 +179,14 @@ class RegWord(SingletonBase):
 
         self.byte = byte
         self.flag = flag
+        self._initialized = True
+        
         self._AF = (self.byte.A << 8) | self.flag.F # Need to explicitly tell python to access the flags property
         self._BC = (self.byte.B << 8) | self.byte.C
         self._DE = (self.byte.D << 8) | self.byte.E
         self._HL = (self.byte.H << 8) | self.byte.L
         self._SP = Word(INIT_STACK_POINTER)
         self._PC = Word(INIT_PROG_COUNTER)
-        self._initialized = True
     
     #============ Stack Pointer and Program Counter Properties===#
 

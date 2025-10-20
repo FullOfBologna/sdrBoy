@@ -558,27 +558,50 @@ class TestOpCodes:
     #          CB PREFIX TEST CASES
     #==========================================
 
-    # Test cases for _rlc_r8 helper
+    # Test cases for _rlc_r8 helper (Rotate Left Circular)
     # Format: initial_value, expected_result, expected_flags (ZNHC), id
     rlc_r8_test_cases = [
-        pytest.param(0x85, 0x0B, "0001", id="RLC 0x85 -> 0x0B, C=1"), # Bit 7 = 1
-        pytest.param(0x01, 0x02, "0000", id="RLC 0x01 -> 0x02, C=0"), # Bit 7 = 0
+        pytest.param(0x85, 0x0B, "0001", id="RLC 0x85 -> 0x0B, C=1"), # Bit 7=1 becomes new C and bit 0
+        pytest.param(0x01, 0x02, "0000", id="RLC 0x01 -> 0x02, C=0"), # Bit 7=0 becomes new C
         pytest.param(0x80, 0x01, "0001", id="RLC 0x80 -> 0x01, C=1"), # Edge case high bit
         pytest.param(0x00, 0x00, "1000", id="RLC 0x00 -> 0x00, Z=1, C=0"), # Zero case
         pytest.param(0xFF, 0xFF, "0001", id="RLC 0xFF -> 0xFF, C=1"), # All ones
         pytest.param(0x4A, 0x94, "0000", id="RLC 0x4A -> 0x94, C=0"), # Mid-range value
     ]
 
-    # Test cases for _rrc_r8 helper
+
+    # Test cases for _rrc_r8 helper (Rotate Right Circular)
     # Format: initial_value, expected_result, expected_flags (ZNHC), id
     rrc_r8_test_cases = [
-        pytest.param(0x01, 0x80, "0001", id="RRC 0x01 -> 0x80, C=1"), # Bit 0 = 1
-        pytest.param(0x0A, 0x05, "0000", id="RRC 0x0A -> 0x05, C=0"), # Bit 0 = 0
-        pytest.param(0x01, 0x80, "0001", id="RRC 0x01 -> 0x80, C=1"), # Edge case low bit (duplicate for clarity)
+        pytest.param(0x01, 0x80, "0001", id="RRC 0x01 -> 0x80, C=1"), # Bit 0=1 becomes new C and bit 7
+        pytest.param(0x0A, 0x05, "0000", id="RRC 0x0A -> 0x05, C=0"), # Bit 0=0 becomes new C
         pytest.param(0x00, 0x00, "1000", id="RRC 0x00 -> 0x00, Z=1, C=0"), # Zero case
         pytest.param(0xFF, 0xFF, "0001", id="RRC 0xFF -> 0xFF, C=1"), # All ones
         pytest.param(0x95, 0xCA, "0001", id="RRC 0x95 -> 0xCA, C=1"), # Mid-range value
     ]
+
+    # Test cases for _cb_rl_r8 helper (Rotate Left through Carry)
+    # Format: initial_value, initial_carry, expected_result, expected_flags (ZNHC), id
+    rl_r8_test_cases = [
+        pytest.param(0x80, 0, 0x00, "1001", id="RL: Bit 7 to C, C=0 in"), # 1000 0000 -> C=1, 0000 0000
+        pytest.param(0x10, 0, 0x20, "0000", id="RL: Basic shift, C=0 in"),
+        pytest.param(0x00, 1, 0x01, "0000", id="RL: C=1 into bit 0"),
+        pytest.param(0x95, 1, 0x2B, "0001", id="RL: 1001 0101, C=1 -> C=1, 0010 1011"),
+        pytest.param(0xFF, 0, 0xFE, "0001", id="RL: 1111 1111, C=0 -> C=1, 1111 1110"),
+        pytest.param(0xFF, 1, 0xFF, "0001", id="RL: 1111 1111, C=1 -> C=1, 1111 1111"),
+    ]
+
+    # Test cases for _cb_rr_r8 helper (Rotate Right through Carry)
+    # Format: initial_value, initial_carry, expected_result, expected_flags (ZNHC), id
+    rr_r8_test_cases = [
+        pytest.param(0x01, 0, 0x00, "1001", id="RR: Bit 0 to C, C=0 in"), # 0000 0001 -> C=1, 0000 0000
+        pytest.param(0x20, 0, 0x10, "0000", id="RR: Basic shift, C=0 in"),
+        pytest.param(0x00, 1, 0x80, "0000", id="RR: C=1 into bit 7"),
+        pytest.param(0x2B, 1, 0x95, "0001", id="RR: 0010 1011, C=1 -> C=1, 1001 0101"),
+        pytest.param(0xFF, 0, 0x7F, "0001", id="RR: 1111 1111, C=0 -> C=1, 0111 1111"),
+        pytest.param(0xFF, 1, 0xFF, "0001", id="RR: 1111 1111, C=1 -> C=1, 1111 1111"),
+    ]
+
 
     # Manually expanded Test cases for CB RLC instructions
     cb_rlc_test_cases = []
@@ -614,6 +637,38 @@ class TestOpCodes:
             "_cb_rrc_mhl", "mhl", _val, _res, _flags, id=f"RRC (HL): {_tid}"
         ))
 
+
+    # Manually expanded Test cases for CB RL instructions
+    cb_rl_test_cases = []
+    for _reg in _registers:
+        for _param in rl_r8_test_cases:
+            _val, _carry, _res, _flags = _param.values
+            _tid = _param.id
+            cb_rl_test_cases.append(pytest.param(
+                f"_cb_rl_{_reg.lower()}", _reg, _val, _carry, _res, _flags, id=f"RL {_reg}: {_tid}"
+            ))
+    for _param in rl_r8_test_cases:
+        _val, _carry, _res, _flags = _param.values
+        _tid = _param.id
+        cb_rl_test_cases.append(pytest.param(
+            "_cb_rl_mhl", "mhl", _val, _carry, _res, _flags, id=f"RL (HL): {_tid}"
+        ))
+
+    # Manually expanded Test cases for CB RR instructions
+    cb_rr_test_cases = []
+    for _reg in _registers:
+        for _param in rr_r8_test_cases:
+            _val, _carry, _res, _flags = _param.values
+            _tid = _param.id
+            cb_rr_test_cases.append(pytest.param(
+                f"_cb_rr_{_reg.lower()}", _reg, _val, _carry, _res, _flags, id=f"RR {_reg}: {_tid}"
+            ))
+    for _param in rr_r8_test_cases:
+        _val, _carry, _res, _flags = _param.values
+        _tid = _param.id
+        cb_rr_test_cases.append(pytest.param(
+            "_cb_rr_mhl", "mhl", _val, _carry, _res, _flags, id=f"RR (HL): {_tid}"
+        ))
 
 
     #==========================================
@@ -1580,6 +1635,91 @@ class TestOpCodes:
 
         # Act
         pc_override, cycle_override = instruction_method(None) # operandAddr not used by CB rotate
+
+        # Assert
+        # Check result in register or memory
+        if register_name == "mhl":
+            final_value = cpu.Memory.readByte(target_hl_addr)
+            assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
+        else:
+            final_value = getattr(cpu.CoreReg, register_name)
+            assert final_value == expected_result, f"{method_name}: Expected {register_name}={expected_result:02X}, got {final_value:02X}"
+
+        # Check flags
+        assert cpu.Flags.z == int(expected_flags[0]), f"{method_name}: Expected Z={expected_flags[0]}, got {cpu.Flags.z}"
+        assert cpu.Flags.n == int(expected_flags[1]), f"{method_name}: Expected N={expected_flags[1]}, got {cpu.Flags.n}"
+        assert cpu.Flags.h == int(expected_flags[2]), f"{method_name}: Expected H={expected_flags[2]}, got {cpu.Flags.h}"
+        assert cpu.Flags.c == int(expected_flags[3]), f"{method_name}: Expected C={expected_flags[3]}, got {cpu.Flags.c}"
+
+        # Check return values
+        assert pc_override is None, f"{method_name}: PC override should be None"
+        assert cycle_override is None, f"{method_name}: Cycle override should be None"
+
+    @pytest.mark.parametrize("method_name, register_name, initial_value, initial_carry, expected_result, expected_flags", cb_rl_test_cases)
+    def test_cb_rl_instructions(self, cpu, method_name, register_name, initial_value, initial_carry, expected_result, expected_flags):
+        """Tests the CB-prefixed RL instructions (RL r8, RL (HL))."""
+        # Arrange
+        instruction_method = getattr(cpu, method_name)
+        target_hl_addr = 0xC7C3 # Example address for (HL) tests
+
+        # Set initial value in register or memory
+        if register_name == "mhl":
+            cpu.CoreWords.HL = target_hl_addr
+            cpu.Memory.writeByte(initial_value, target_hl_addr)
+        else:
+            setattr(cpu.CoreReg, register_name, initial_value)
+
+        # Set initial flags
+        cpu.Flags.z = 1 if expected_flags[0] == '0' else 0
+        cpu.Flags.n = 1 # Expected N is always 0
+        cpu.Flags.h = 1 # Expected H is always 0
+        cpu.Flags.c = initial_carry
+
+        # Act
+        pc_override, cycle_override = instruction_method(None)
+
+        # Assert
+        # Check result in register or memory
+        if register_name == "mhl":
+            final_value = cpu.Memory.readByte(target_hl_addr)
+            assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
+        else:
+            final_value = getattr(cpu.CoreReg, register_name)
+            assert final_value == expected_result, f"{method_name}: Expected {register_name}={expected_result:02X}, got {final_value:02X}"
+
+        # Check flags
+        assert cpu.Flags.z == int(expected_flags[0]), f"{method_name}: Expected Z={expected_flags[0]}, got {cpu.Flags.z}"
+        assert cpu.Flags.n == int(expected_flags[1]), f"{method_name}: Expected N={expected_flags[1]}, got {cpu.Flags.n}"
+        assert cpu.Flags.h == int(expected_flags[2]), f"{method_name}: Expected H={expected_flags[2]}, got {cpu.Flags.h}"
+        assert cpu.Flags.c == int(expected_flags[3]), f"{method_name}: Expected C={expected_flags[3]}, got {cpu.Flags.c}"
+
+        # Check return values
+        assert pc_override is None, f"{method_name}: PC override should be None"
+        assert cycle_override is None, f"{method_name}: Cycle override should be None"
+
+
+    @pytest.mark.parametrize("method_name, register_name, initial_value, initial_carry, expected_result, expected_flags", cb_rr_test_cases)
+    def test_cb_rr_instructions(self, cpu, method_name, register_name, initial_value, initial_carry, expected_result, expected_flags):
+        """Tests the CB-prefixed RR instructions (RR r8, RR (HL))."""
+        # Arrange
+        instruction_method = getattr(cpu, method_name)
+        target_hl_addr = 0xD8D4 # Example address for (HL) tests
+
+        # Set initial value in register or memory
+        if register_name == "mhl":
+            cpu.CoreWords.HL = target_hl_addr
+            cpu.Memory.writeByte(initial_value, target_hl_addr)
+        else:
+            setattr(cpu.CoreReg, register_name, initial_value)
+
+        # Set initial flags
+        cpu.Flags.z = 1 if expected_flags[0] == '0' else 0
+        cpu.Flags.n = 1 # Expected N is always 0
+        cpu.Flags.h = 1 # Expected H is always 0
+        cpu.Flags.c = initial_carry
+
+        # Act
+        pc_override, cycle_override = instruction_method(None)
 
         # Assert
         # Check result in register or memory

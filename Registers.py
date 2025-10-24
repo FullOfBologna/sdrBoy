@@ -109,57 +109,54 @@ class RegByte(SingletonBase):
         self._L = Byte(0x4D)
         # self._HL = Word(self.H << 8 | self.L)
     
-    @property    
+    @property
     def A(self):
         return self._A
-    
     @A.setter
-    def A(self, byte : Byte):
-        self._A = byte
+    def A(self, value):
+        self._A = Byte(value)
 
     @property
     def B(self):
         return self._B
-    
     @B.setter
-    def B(self, byte : Byte):
-        self._B = byte
+    def B(self, value):
+        self._B = Byte(value)
 
-    @property    
+    @property
     def C(self):
         return self._C
-
     @C.setter
-    def C(self, byte : Byte):
-        self._C = byte
+    def C(self, value):
+        self._C = Byte(value)
 
-    @property    
+    @property
     def D(self):
         return self._D
     @D.setter
-    def D(self, byte : Byte):
-        self._D = byte
+    def D(self, value):
+        self._D = Byte(value)
 
-    @property    
+    @property
     def E(self):
         return self._E
     @E.setter
-    def E(self, byte : Byte):
-        self._E = byte
-    
-    @property    
+    def E(self, value):
+        self._E = Byte(value)
+
+    @property
     def H(self):
         return self._H
     @H.setter
-    def H(self, byte : Byte):
-        self._H = byte
+    def H(self, value):
+        self._H = Byte(value)
 
-    @property   
+    @property
     def L(self):
         return self._L
     @L.setter
-    def L(self, byte : Byte):
-        self._L = byte
+    def L(self, value):
+        self._L = Byte(value)
 
 class RegWord(SingletonBase):
 
@@ -180,11 +177,11 @@ class RegWord(SingletonBase):
         self.byte = byte
         self.flag = flag
         self._initialized = True
-        
-        self._AF = (self.byte.A << 8) | self.flag.F # Need to explicitly tell python to access the flags property
-        self._BC = (self.byte.B << 8) | self.byte.C
-        self._DE = (self.byte.D << 8) | self.byte.E
-        self._HL = (self.byte.H << 8) | self.byte.L
+
+        # self._AF = Word((self.byte.A << 8) | self.flag.F) # Need to explicitly tell python to access the flags property
+        # self._BC = Word((self.byte.B << 8) | self.byte.C)
+        # self._DE = Word((self.byte.D << 8) | self.byte.E)
+        # self._HL = Word((self.byte.H << 8) | self.byte.L)
         self._SP = Word(INIT_STACK_POINTER)
         self._PC = Word(INIT_PROG_COUNTER)
     
@@ -195,13 +192,13 @@ class RegWord(SingletonBase):
         return self._SP
     
     @SP.setter
-    def SP(self,value:Word):
-        self._SP = value
+    def SP(self,value):
+        self._SP = Word(value)
 
-    def SP_Reset(self, value:Word = None):
+    def SP_Reset(self, value = None):
         self._SP = 0
         if value is not None:
-            self._SP = value
+            self._SP = Word(value)
 
     @property
     def PC(self):
@@ -209,61 +206,55 @@ class RegWord(SingletonBase):
     
     # TODO: Need to determine whether carry/wrap around needs to be handled
     @PC.setter
-    def PC(self,value:Word):
-        self._PC = value
+    def PC(self,value):
+        self._PC = Word(value)
 
-    def PC_Reset(self, value:Word = None):
+    def PC_Reset(self, value = None):
         self._PC = 0
         if value is not None:
-            self._PC = value
+            self._PC = Word(value)
 
 
     #============ 16 bit Words of Core Registers=================#
     
     # Getter will update the value when it is called, from referencing the underlying core register
+
+    ## NOTE: The use of astype(Word) is necessary to prevent numpy from performing 8 bit truncation during the bitwise operations
     @property    
     def AF(self):
-        self._AF = (self.byte.A << 8) | self.flag.F
-        return self._AF
+        return (self.byte.A.astype(Word) << 8) | self.flag.F
     
     @AF.setter
-    def AF(self, word : Word):
+    def AF(self, word):
         self.byte.A = (word & 0xFF00) >> 8
         self.flag.F = (word & 0xFF)
-        self._AF = (self.byte.A << 8) | self.flag.F
 
     @property    
     def BC(self):
-        self._BC = (self.byte.B << 8) | self.byte.C
-        return self._BC
+        return Word((self.byte.B.astype(Word) << 8) | self.byte.C)
     
     @BC.setter
-    def BC(self, word : Word):
+    def BC(self, word):
         self.byte.B = (word & 0xFF00) >> 8
         self.byte.C = (word & 0xFF)
-        self._BC = (self.byte.B  << 8) | self.byte.C
     
     @property    
     def DE(self):
-        self._DE = (self.byte.D << 8) | self.byte.E
-        return self._DE
+        return Word((self.byte.D.astype(Word) << 8) | self.byte.E)
     
     @DE.setter
-    def DE(self, word : Word):
+    def DE(self, word):
         self.byte.D = (word & 0xFF00) >> 8
         self.byte.E = (word & 0xFF)
-        self._DE = (self.byte.D  << 8) | self.byte.E
 
     @property    
     def HL(self):
-        self._HL = (self.byte.H << 8) | self.byte.L
-        return self._HL
+        return Word((self.byte.H.astype(Word) << 8) | self.byte.L)
     
     @HL.setter
-    def HL(self, word : Word):
+    def HL(self, word):
         self.byte.H = (word & 0xFF00) >> 8
         self.byte.L = (word & 0xFF)
-        self._HL = (self.byte.H  << 8) | self.byte.L
 
 class InterruptMask(SingletonBase):
     _initialized = False # Flag to ensure __init__ runs only once

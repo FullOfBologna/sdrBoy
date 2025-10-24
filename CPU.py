@@ -2135,6 +2135,8 @@ class CPU(SingletonBase):
         self.Flags.n = 0
         self.Flags.h = 0
         self.Flags.c = new_carry
+
+        return register
     
     def _cb_rl_b(self, operandAddr):
         # Rotate the B register left through carry flag

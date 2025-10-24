@@ -940,7 +940,7 @@ class TestOpCodes:
         cpu.Flags.F = 0x00  # Reset flags for consistent testing
             
         instruction_method = getattr(cpu, method_name)
-
+ 
         operand_address = cpu.CoreWords.HL # Placeholder for operand address
 
         # Set up the appropriate register with the test value

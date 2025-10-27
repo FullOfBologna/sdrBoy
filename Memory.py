@@ -62,5 +62,5 @@ class Memory(SingletonBase):
     
     # Little Endian Read
     def readWord(self,addr):
-        return (self.memBank[addr+1] << 8) | self.memBank[addr] 
+        return (self.memBank[addr+1].astype(Word) << 8) | self.memBank[addr] 
 

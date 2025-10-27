@@ -1330,7 +1330,6 @@ class TestOpCodes:
         """Tests load memory at HL from register (_ld_mhl_X)"""
         # Arrange
         cpu.CoreWords.HL = initial_hl
-        setattr(cpu.CoreReg, src_reg, initial_src_value)
         cpu.Memory.writeByte(0x00, initial_hl)  # Initialize memory location
         initial_flags = cpu.Flags.F  # Save initial flag state
 
@@ -1339,6 +1338,8 @@ class TestOpCodes:
 
         # Act
         pc_override, cycle_override = instruction_method(None)
+        
+        setattr(cpu.CoreReg, src_reg, initial_src_value)
 
         # Assert
         memory_value = cpu.Memory.readByte(initial_hl)

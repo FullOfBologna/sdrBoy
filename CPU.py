@@ -1308,57 +1308,37 @@ class CPU(SingletonBase):
         return None, None
     def _ld_l_a(self,operandAddr):  
         self.CoreReg.L = self.CoreReg.A
-        return None, None
-    
 
-    def ld_r8_mhl(self,operandAddr):
-        # Load the value stored in the HL register into the provided 8 bit register
-        byteValue = self.Memory.readByte(self.CoreWords.HL)
-        return byteValue
-    
-    def _ld_b_mhl(self,operandAddr):
-        self.CoreReg.B = self.ld_r8_mhl(operandAddr)
+    #======================================================================
+    # LD r, (HL)
+    #======================================================================
+    def _ld_a_mhl(self, operandAddr): self.CoreReg.A = self.Memory.readByte(self.CoreWords.HL); return None, None
+    def _ld_b_mhl(self, operandAddr): self.CoreReg.B = self.Memory.readByte(self.CoreWords.HL); return None, None
+    def _ld_c_mhl(self, operandAddr): self.CoreReg.C = self.Memory.readByte(self.CoreWords.HL); return None, None
+    def _ld_d_mhl(self, operandAddr): self.CoreReg.D = self.Memory.readByte(self.CoreWords.HL); return None, None
+    def _ld_e_mhl(self, operandAddr): self.CoreReg.E = self.Memory.readByte(self.CoreWords.HL); return None, None
+    def _ld_h_mhl(self, operandAddr):
+        mhl_value = self.Memory.readByte(self.CoreWords.HL)
+        self.CoreReg.H = mhl_value
         return None, None
-    def _ld_c_mhl(self,operandAddr):
-        self.CoreReg.C = self.ld_r8_mhl(operandAddr)
+    def _ld_l_mhl(self, operandAddr): 
+        mhl_value = self.Memory.readByte(self.CoreWords.HL)
+        self.CoreReg.L = mhl_value
         return None, None
-    def _ld_d_mhl(self,operandAddr):
-        self.CoreReg.D = self.ld_r8_mhl(operandAddr)
+
+    #======================================================================
+    # LD (HL), r
+    #======================================================================
+    def _ld_mhl_a(self, operandAddr): self.Memory.writeByte(self.CoreReg.A, self.CoreWords.HL); return None, None
+    def _ld_mhl_b(self, operandAddr): self.Memory.writeByte(self.CoreReg.B, self.CoreWords.HL); return None, None
+    def _ld_mhl_c(self, operandAddr): self.Memory.writeByte(self.CoreReg.C, self.CoreWords.HL); return None, None
+    def _ld_mhl_d(self, operandAddr): self.Memory.writeByte(self.CoreReg.D, self.CoreWords.HL); return None, None
+    def _ld_mhl_e(self, operandAddr): self.Memory.writeByte(self.CoreReg.E, self.CoreWords.HL); return None, None
+    def _ld_mhl_h(self, operandAddr): 
+        orig_mhl = self.Memory.readByte(self.CoreWords.HL)
+        self.Memory.writeByte(self.CoreReg.H, orig_mhl); 
         return None, None
-    def _ld_e_mhl(self,operandAddr):
-        self.CoreReg.E = self.ld_r8_mhl(operandAddr)
-        return None, None
-    def _ld_h_mhl(self,operandAddr):
-        self.CoreReg.H = self.ld_r8_mhl(operandAddr)
-        return None, None
-    def _ld_l_mhl(self,operandAddr):
-        self.CoreReg.L = self.ld_r8_mhl(operandAddr)
-        return None, None
-    
-    def _ld_mhl_r8(self,register):
-        # Load the value of the provided 8 bit register into the location pointed to by HL
-        self.Memory.writeByte(register, self.CoreWords.HL)
-        return None, None
-    
-    def _ld_mhl_b(self,operandAddr):
-        self._ld_mhl_r8(self.CoreReg.B)
-        return None, None
-    def _ld_mhl_c(self,operandAddr):
-        self._ld_mhl_r8(self.CoreReg.C)
-        return None, None
-    def _ld_mhl_d(self,operandAddr):
-        self._ld_mhl_r8(self.CoreReg.D)
-        return None, None
-    def _ld_mhl_e(self,operandAddr):
-        self._ld_mhl_r8(self.CoreReg.E)
-        return None, None
-    def _ld_mhl_h(self,operandAddr):
-        self._ld_mhl_r8(self.CoreReg.H)
-        return None, None
-    def _ld_mhl_l(self,operandAddr):
-        self._ld_mhl_r8(self.CoreReg.L)
-        return None, None
-    
+    def _ld_mhl_l(self, operandAddr): self.Memory.writeByte(self.CoreReg.L, self.CoreWords.HL); return None, None
 
     def _add_a_r8(self,register):
         # Add the value of the provided 8 bit register to the accumulator

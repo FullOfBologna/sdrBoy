@@ -755,7 +755,7 @@ class CPU(SingletonBase):
     def _ld_r16_d16(self, operandAddr):
         lsB = self.Memory.readByte(operandAddr)
         msB = self.Memory.readByte(operandAddr+1)
-        return (msB << 8) | lsB
+        return (msB.astype(Word) << 8) | lsB
 
     # Load Immediate d16 value into BC Register
     def _ld_bc_d16(self, operandAddr):
@@ -1308,6 +1308,7 @@ class CPU(SingletonBase):
         return None, None
     def _ld_l_a(self,operandAddr):  
         self.CoreReg.L = self.CoreReg.A
+        return None, None
 
     #======================================================================
     # LD r, (HL)
@@ -1940,15 +1941,14 @@ class CPU(SingletonBase):
 
     def _ldh_a_mc(self, operandAddr):
         # Load the value from the memory location pointed to by the address in the C register into the accumulator
-        targetAddr = 0xFF00 + self.CoreReg.C
-
+        targetAddr = 0xFF00 + self.CoreReg.C.astype(Word)
         self.CoreReg.A = self.Memory.readByte(targetAddr)
 
         return None, None
     
     def _ldh_mc_a(self, operandAddr):
         # Load the accumulator into the memory location pointed to by the address in the C register
-        targetAddr = 0xFF00 + self.CoreReg.C
+        targetAddr = 0xFF00 + self.CoreReg.C.astype(Word)
 
         self.Memory.writeByte(self.CoreReg.A, targetAddr)
 
@@ -1956,7 +1956,7 @@ class CPU(SingletonBase):
     
     def _ldh_a_ma8(self, operandAddr):
         # Load the value from the memory location pointed to by the address in the operandAddr into the accumulator
-        targetAddr = 0xFF00 + operandAddr
+        targetAddr = 0xFF00 + self.CoreReg.C.astype(Word)
 
         self.CoreReg.A = self.Memory.readByte(targetAddr)
 
@@ -1964,7 +1964,7 @@ class CPU(SingletonBase):
     
     def _ldh_ma8_a(self, operandAddr):
         # Load the accumulator into the memory location pointed to by the address in the operandAddr
-        targetAddr = 0xFF00 + operandAddr
+        targetAddr = 0xFF00 + self.CoreReg.C.astype(Word)
 
         self.Memory.writeByte(self.CoreReg.A, targetAddr)
 
@@ -2293,7 +2293,7 @@ class CPU(SingletonBase):
 
     def _cb_res_b_r8(self, bit, register_value):
         # Reset (clear) bit 'b' of an 8-bit register value
-        mask = ~(1 << bit)
+        mask = 0xFF ^ (1 << bit) # Clear bit 'b' with 0xff xor'ed with shifted 1
         return register_value & mask
 
     def _cb_set_b_r8(self, bit, register_value):

@@ -1712,9 +1712,9 @@ class TestOpCodes:
         cpu.Memory.writeByte(initial_mem_value, target_addr) # Pre-set memory value
 
         operand = None # Default operand
-        if "_mc_" in method_name:
+        if "_mc" in method_name:
             cpu.CoreReg.C = initial_c_or_a8 # Set C register if using (C) addressing
-        elif "_ma8_" in method_name:
+        elif "_ma8" in method_name:
             # For (a8) addressing, the a8 value is the operand
             operand = initial_c_or_a8
             # Simulate fetching a8 from memory (though the method receives it directly)
@@ -1741,12 +1741,13 @@ class TestOpCodes:
 
 
         # Check C register is unchanged (it's only used for address calculation)
-        if "_mc_" in method_name:
+        if "_mc" in method_name:
             assert cpu.CoreReg.C == initial_c_or_a8, f"Register C should be unchanged ({initial_c_or_a8:02X}), got {cpu.CoreReg.C:02X}"
 
         assert pc_override is None, "PC override should be None"
         # Cycle override might vary (8 for loads, 12 for stores with a8), check specific instruction details if needed
         # assert cycle_override is None, "Cycle override should be None"
+
 
     @pytest.mark.parametrize("method_name, register_name, initial_value, expected_result, expected_flags", cb_rlc_test_cases)
     def test_cb_rlc_instructions(self, cpu, method_name, register_name, initial_value, expected_result, expected_flags):

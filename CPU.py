@@ -1335,12 +1335,9 @@ class CPU(SingletonBase):
     def _ld_mhl_c(self, operandAddr): self.Memory.writeByte(self.CoreReg.C, self.CoreWords.HL); return None, None
     def _ld_mhl_d(self, operandAddr): self.Memory.writeByte(self.CoreReg.D, self.CoreWords.HL); return None, None
     def _ld_mhl_e(self, operandAddr): self.Memory.writeByte(self.CoreReg.E, self.CoreWords.HL); return None, None
-    def _ld_mhl_h(self, operandAddr): 
-        orig_mhl = self.Memory.readByte(self.CoreWords.HL)
-        self.Memory.writeByte(self.CoreReg.H, orig_mhl); 
-        return None, None
+    def _ld_mhl_h(self, operandAddr): self.Memory.writeByte(self.CoreReg.H, self.CoreWords.HL); return None, None
     def _ld_mhl_l(self, operandAddr): self.Memory.writeByte(self.CoreReg.L, self.CoreWords.HL); return None, None
-
+    
     def _add_a_r8(self,register):
         # Add the value of the provided 8 bit register to the accumulator
         original = int(self.CoreReg.A)
@@ -1735,7 +1732,7 @@ class CPU(SingletonBase):
         self.CoreWords.SP = (self.CoreWords.SP + 1) & 0xFFFF
 
         # Combine the two bytes into a single word
-        return (msB << 8) | lsB
+        return (msB.astype(Word) << 8) | lsB
     
     def _pop_af(self,operandAddr):
         # Pop stack into AF register pair
@@ -1854,7 +1851,7 @@ class CPU(SingletonBase):
         msB = self.Memory.readByte(self.CoreWords.SP)
         self.CoreWords.SP = (self.CoreWords.SP + 1) & 0xFFFF
 
-        target_addr = (msB << 8) | lsB
+        target_addr = (msB.astype(Word) << 8) | lsB
         return target_addr
     
     def _ret(self, operandAddr):
@@ -1885,8 +1882,9 @@ class CPU(SingletonBase):
             return None, 8
         
     def _reti(self, operandAddr):
-        #TODO Implement Enable/Disable Interrupts
-        pass
+        return_addr = self._perform_ret()
+        self.InterruptMask.IME = 1  # Re-enable interrupts
+        return return_addr, 16
 
 
     # Helper specifically for RST instructions
@@ -1939,35 +1937,31 @@ class CPU(SingletonBase):
         return None, None
     
 
-    def _ldh_a_mc(self, operandAddr):
-        # Load the value from the memory location pointed to by the address in the C register into the accumulator
-        targetAddr = 0xFF00 + self.CoreReg.C.astype(Word)
-        self.CoreReg.A = self.Memory.readByte(targetAddr)
-
-        return None, None
-    
-    def _ldh_mc_a(self, operandAddr):
-        # Load the accumulator into the memory location pointed to by the address in the C register
-        targetAddr = 0xFF00 + self.CoreReg.C.astype(Word)
-
-        self.Memory.writeByte(self.CoreReg.A, targetAddr)
-
-        return None, None
-    
-    def _ldh_a_ma8(self, operandAddr):
-        # Load the value from the memory location pointed to by the address in the operandAddr into the accumulator
-        targetAddr = 0xFF00 + self.CoreReg.C.astype(Word)
-
-        self.CoreReg.A = self.Memory.readByte(targetAddr)
-
-        return None, None
-    
+    #======================================================================
+    # LDH: Load to/from 0xFF00 + n
+    #======================================================================
     def _ldh_ma8_a(self, operandAddr):
-        # Load the accumulator into the memory location pointed to by the address in the operandAddr
-        targetAddr = 0xFF00 + self.CoreReg.C.astype(Word)
+        # LDH (a8), A - operandAddr is the immediate a8 value
+        address = 0xFF00 + operandAddr
+        self.Memory.writeByte(self.CoreReg.A, address)
+        return None, None
 
-        self.Memory.writeByte(self.CoreReg.A, targetAddr)
+    def _ldh_a_ma8(self, operandAddr):
+        # LDH A, (a8) - operandAddr is the immediate a8 value
+        address = 0xFF00 + operandAddr
+        self.CoreReg.A = self.Memory.readByte(address)
+        return None, None
 
+    def _ldh_mc_a(self, operandAddr):
+        # LDH (C), A - operandAddr is ignored
+        address = 0xFF00 + self.CoreReg.C.astype(Word)
+        self.Memory.writeByte(self.CoreReg.A, address)
+        return None, None
+
+    def _ldh_a_mc(self, operandAddr):
+        # LDH A, (C) - operandAddr is ignored
+        address = 0xFF00 + self.CoreReg.C.astype(Word)
+        self.CoreReg.A = self.Memory.readByte(address)
         return None, None
     
 

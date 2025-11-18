@@ -26,7 +26,7 @@ class CPU(SingletonBase):
         print(f"Iniitalizing CPU instance {id(self)}")
 
         # self.Memory = Memory()
-        self.Bus = bus
+        self.Bus = Bus
         self.CoreReg = RegByte()
         self.Flags = Flag()
         self.CoreWords = RegWord(self.CoreReg,self.Flags)

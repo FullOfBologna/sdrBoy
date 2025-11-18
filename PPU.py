@@ -10,11 +10,6 @@ import numpy as np
 
 from Bus import Bus
 
-Byte = np.uint8
-Word = np.uint16
-
-from Memory import Memory
-
 # PPU Timing Constants
 CYCLES_PER_SCANLINE = 456
 VISIBLE_SCANLINES = 144
@@ -34,7 +29,7 @@ class PPU(SingletonBase):
 
         print(f"Iniitalizing PPU instance {id(self)}")
 
-        self.Memory = Memory()
+        self.Bus = bus
 
         # PPU Registers
         self.LCDC = Byte(0xFF40)   # LCD Control

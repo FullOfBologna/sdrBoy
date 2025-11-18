@@ -9,13 +9,15 @@ from Registers import InterruptMask
 import numpy as np
 
 
-from Memory import Memory
+from Bus import Bus
+
+# from Memory import Memory
 
 class CPU(SingletonBase):
 
     _initialized = False # Flag to ensure __init__ runs only once
 
-    def __init__(self):
+    def __init__(self, bus: Bus):
         # Initialization Guard
         if hasattr(self, '_initialized') and self._initialized:
             print(f"... Skipping CPU __init__ due to existing initialization {id(self)}")
@@ -23,7 +25,8 @@ class CPU(SingletonBase):
 
         print(f"Iniitalizing CPU instance {id(self)}")
 
-        self.Memory = Memory()
+        # self.Memory = Memory()
+        self.Bus = bus
         self.CoreReg = RegByte()
         self.Flags = Flag()
         self.CoreWords = RegWord(self.CoreReg,self.Flags)

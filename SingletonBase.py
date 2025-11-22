@@ -4,7 +4,7 @@ class SingletonBase:
     # Accept *args and **kwargs here for when children class have specific input arguments. Don't do anything with them
     def __new__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            print(f"Creating new instance for {cls.__name__}")
+            # print(f"Creating new instance for {cls.__name__}")
             instance = super().__new__(cls)
             cls._instances[cls] = instance
         

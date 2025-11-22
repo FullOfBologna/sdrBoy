@@ -17,19 +17,21 @@ class Bus(SingletonBase):
 
     def __init__(self):
         if hasattr(self, '_initialized') and self._initialized:
-            print(f"... Skipping re-initialization of {self.__class__.__name__}")
             return
         
-        print ("... Initializing Bus")
-
         self.wram = np.zeros(0x2000, dtype=Byte)
         self.hram = np.zeros(0x80, dtype=Byte)
+        self.ext_ram = np.zeros(0x2000, dtype=Byte)
+        self.io_regs = np.zeros(0x80, dtype=Byte)
+        self.ie_reg = Byte(0)
 
-        self.rom_data = None
+        self.rom_data = np.zeros(0x8000, dtype=Byte)
 
         ### Instances of other components
         self.cpu = None
         self.ppu = None
+
+        self._initialized = True
 
 
     def loadROM(self, rom_bytes: bytes):
@@ -44,43 +46,71 @@ class Bus(SingletonBase):
         elif 0x8000 <= addr <= 0x9FFF:
             # VRAM Area
             if self.ppu is None:
-                raise MemoryAccessError("PPU not initialized in Bus readByte")
+                raise MemoryAccessError(addr, "PPU not initialized in Bus readByte")
             return self.ppu.vram[addr - 0x8000]
+        elif 0xA000 <= addr <= 0xBFFF:
+            return self.ext_ram[addr - 0xA000]
         elif 0xC000 <= addr <= 0xDFFF:
             # WRAM Area
             return self.wram[addr - 0xC000]
+        elif 0xE000 <= addr <= 0xFDFF: # Echo RAM
+            return self.wram[addr - 0xE000]
         elif 0xFF40 <= addr <= 0xFF4B: 
             # PPU Registers
             if self.ppu is None:
-                raise MemoryAccessError("PPU not initialized in Bus readByte")
+                raise MemoryAccessError(addr, "PPU not initialized in Bus readByte")
             return self.ppu.readRegister(addr)
+        elif 0xFF00 <= addr <= 0xFF7F:
+            # Other IO Registers
+            return self.io_regs[addr - 0xFF00]
         elif 0xFF80 <= addr <= 0xFFFE:
             # HRAM Area
             return self.hram[addr - 0xFF80]
+        elif addr == 0xFFFF:
+            return self.ie_reg
         else:
             # Other areas (I/O, OAM, etc.)
-            raise MemoryAccessError(f"Read from unhandled address: {hex(addr)}")
+            raise MemoryAccessError(addr, f"Read from unhandled address: {hex(addr)}")
         
     def writeByte(self, addr: Word, value: Byte):
-        if 0x8000 <= addr <= 0x9FFF:
+        if 0x0000 <= addr <= 0x7FFF:
+            # ROM Area - Read Only
+            # raise MemoryAccessError(addr, f"Cannot write to ROM at address {hex(addr)}")
+            pass # Ignore writes to ROM for now, or raise error? User said "Cannot write".
+                 # Real hardware ignores it (or MBC handles it). 
+                 # For now, let's ignore it to be safe, or raise if we want to be strict.
+                 # Given the user's prompt "We cannot write...", raising an error might be better to catch bad tests.
+                 # But let's stick to "ignore" or "error". 
+                 # Actually, let's raise an error to force us to fix the tests as requested.
+            raise MemoryAccessError(addr, f"Cannot write to ROM at address {hex(addr)}")
+        elif 0x8000 <= addr <= 0x9FFF:
             # VRAM Area
             if self.ppu is None:
-                raise MemoryAccessError("PPU not initialized in Bus writeByte")
+                raise MemoryAccessError(addr, "PPU not initialized in Bus writeByte")
             self.ppu.vram[addr - 0x8000] = value
+        elif 0xA000 <= addr <= 0xBFFF:
+            self.ext_ram[addr - 0xA000] = value
         elif 0xC000 <= addr <= 0xDFFF:
             # WRAM Area
             self.wram[addr - 0xC000] = value
+        elif 0xE000 <= addr <= 0xFDFF: # Echo RAM
+            self.wram[addr - 0xE000] = value
         elif 0xFF40 <= addr <= 0xFF4B:
             # PPU Registers
             if self.ppu is None:
-                raise MemoryAccessError("PPU not initialized in Bus writeByte")
+                raise MemoryAccessError(addr, "PPU not initialized in Bus writeByte")
             self.ppu.writeRegister(addr, value)
+        elif 0xFF00 <= addr <= 0xFF7F:
+            # Other IO Registers
+            self.io_regs[addr - 0xFF00] = value
         elif 0xFF80 <= addr <= 0xFFFE:
             # HRAM Area
             self.hram[addr - 0xFF80] = value
+        elif addr == 0xFFFF:
+            self.ie_reg = value
         else:
             # Other areas (I/O, OAM, etc.)
-            raise MemoryAccessError(f"Write to unhandled address: {hex(addr)} with value {hex(value)}")        
+            raise MemoryAccessError(addr, f"Write to unhandled address: {hex(addr)} with value {hex(value)}")        
         
     def writeWord(self, addr: Word, value: Word):
         low = value & 0x00FF
@@ -91,5 +121,6 @@ class Bus(SingletonBase):
     def readWord(self, addr: Word) -> Word:
         low = self.readByte(addr)
         high = self.readByte(addr + 1)
-        return (high << 8) | low
+        return (high.astype(Word) << 8) | low
+
     

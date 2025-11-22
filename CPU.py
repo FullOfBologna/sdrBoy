@@ -17,7 +17,7 @@ class CPU(SingletonBase):
 
     _initialized = False # Flag to ensure __init__ runs only once
 
-    def __init__(self, bus: Bus):
+    def __init__(self):
         # Initialization Guard
         if hasattr(self, '_initialized') and self._initialized:
             print(f"... Skipping CPU __init__ due to existing initialization {id(self)}")
@@ -26,11 +26,11 @@ class CPU(SingletonBase):
         print(f"Iniitalizing CPU instance {id(self)}")
 
         # self.Memory = Memory()
-        self.Bus = Bus
+        self.Bus = Bus()
         self.CoreReg = RegByte()
         self.Flags = Flag()
         self.CoreWords = RegWord(self.CoreReg,self.Flags)
-        self.InterruptMask = InterruptMask(self.Memory)
+        self.InterruptMask = InterruptMask(self.Bus)
 
         self._initialized = True
         self.scheduleIMEEnabled = False 
@@ -65,7 +65,7 @@ class CPU(SingletonBase):
         # Get Current OpCode from memory, via the program counter. 
         currentPC = self.CoreWords.PC
 
-        opCode = self.Memory.readByte(currentPC)
+        opCode = self.Bus.readByte(currentPC)
 
         if opCode in self.lr35902_opCodes:
             opCodeFunc, length, cycles = self.lr35902_opCodes[opCode]
@@ -134,8 +134,8 @@ class CPU(SingletonBase):
                 self.InterruptMask._IF = if_reg
 
                 # Push the current PC onto the stack
-                self.Memory.writeWord(self.CoreWords.SP, self.CoreWords.SP - 2)
-                self.Memory.writeWord(self.CoreWords.PC, self.CoreWords.SP)
+                self.Bus.writeWord(self.CoreWords.SP - 2, self.CoreWords.SP)
+                self.Bus.writeWord(self.CoreWords.SP, self.CoreWords.PC)
 
                 # Set the PC to the handler address
                 self.CoreWords.PC = handlerAddress
@@ -415,7 +415,7 @@ class CPU(SingletonBase):
                 method_name_bit = f"_cb_bit_{bit}_{reg_name.lower()}"
                 if reg_name == 'mhl':
                     def handler_bit_mhl(s, opAddr, b=bit):
-                        s._cb_bit_b_r8(b, s.Memory.readByte(s.CoreWords.HL))
+                        s._cb_bit_b_r8(b, s.Bus.readByte(s.CoreWords.HL))
                         return None, None
                     setattr(self, method_name_bit, handler_bit_mhl)
                 else:
@@ -428,9 +428,9 @@ class CPU(SingletonBase):
                 method_name_res = f"_cb_res_{bit}_{reg_name.lower()}"
                 if reg_name == 'mhl':
                     def handler_res_mhl(s, opAddr, b=bit):
-                        val = s.Memory.readByte(s.CoreWords.HL)
+                        val = s.Bus.readByte(s.CoreWords.HL)
                         res = s._cb_res_b_r8(b, val)
-                        s.Memory.writeByte(res, s.CoreWords.HL)
+                        s.Bus.writeByte(s.CoreWords.HL, res)
                         return None, None
                     setattr(self, method_name_res, handler_res_mhl)
                 else:
@@ -445,9 +445,9 @@ class CPU(SingletonBase):
                 method_name_set = f"_cb_set_{bit}_{reg_name.lower()}"
                 if reg_name == 'mhl':
                     def handler_set_mhl(s, opAddr, b=bit):
-                        val = s.Memory.readByte(s.CoreWords.HL)
+                        val = s.Bus.readByte(s.CoreWords.HL)
                         res = s._cb_set_b_r8(b, val)
-                        s.Memory.writeByte(res, s.CoreWords.HL)
+                        s.Bus.writeByte(s.CoreWords.HL, res)
                         return None, None
                     setattr(self, method_name_set, handler_set_mhl)
                 else:
@@ -756,8 +756,8 @@ class CPU(SingletonBase):
         return None, None
 
     def _ld_r16_d16(self, operandAddr):
-        lsB = self.Memory.readByte(operandAddr)
-        msB = self.Memory.readByte(operandAddr+1)
+        lsB = self.Bus.readByte(operandAddr)
+        msB = self.Bus.readByte(operandAddr+1)
         return (msB.astype(Word) << 8) | lsB
 
     # Load Immediate d16 value into BC Register
@@ -885,7 +885,7 @@ class CPU(SingletonBase):
     
     def _ld_r8_d8(self, operandAddr):
         # Read Operand Data and return
-        d8 = self.Memory.readByte(operandAddr)
+        d8 = self.Bus.readByte(operandAddr)
         return d8
     def _ld_a_d8(self,operandAddr):
         self.CoreReg.A = self._ld_r8_d8(operandAddr)
@@ -911,10 +911,10 @@ class CPU(SingletonBase):
 
     def _inc_mhl(self,operandAddr):
         # Increment Value stored in HL Location
-        original = self.Memory.readByte(self.CoreWords.HL)
+        original = self.Bus.readByte(self.CoreWords.HL)
         result = (original + 1) & 0xFF
 
-        self.Memory.writeByte(result,self.CoreWords.HL)
+        self.Bus.writeByte(self.CoreWords.HL, result)
 
         self.Flags.z = 1 if (result == 0x00) else 0
         self.Flags.n = 0
@@ -923,10 +923,10 @@ class CPU(SingletonBase):
 
     def _dec_mhl(self,operandAddr):
         # Decrement Value stored in HL Location
-        original = self.Memory.readByte(self.CoreWords.HL)
+        original = self.Bus.readByte(self.CoreWords.HL)
         result = (original - 1) & 0xFF
 
-        self.Memory.writeByte(result,self.CoreWords.HL)
+        self.Bus.writeByte(self.CoreWords.HL, result)
 
         self.Flags.z = 1 if result == 0x00 else 0
         self.Flags.n = 1
@@ -958,8 +958,8 @@ class CPU(SingletonBase):
         return None, None
 
     def _ld_mhl_d8(self,operandAddr):
-        d8 = self.Memory.readByte(operandAddr)
-        self.Memory.writeByte(d8, self.CoreWords.HL)
+        d8 = self.Bus.readByte(operandAddr)
+        self.Bus.writeByte(self.CoreWords.HL, d8)
 
     # Rotates Accumulator Register to the left by 1 and sets bit 7 to bit 0
     def _rlca(self,operandAddr):
@@ -1030,7 +1030,7 @@ class CPU(SingletonBase):
     #   HL- decrements the HL register after writing the value
 
     def _ld_mr16_a(self, register):
-        self.Memory.writeByte(self.CoreReg.A, register)
+        self.Bus.writeByte(register, self.CoreReg.A)
         return None, None
 
     def _ld_mbc_a(self, operandAddr):
@@ -1056,11 +1056,11 @@ class CPU(SingletonBase):
         return None, None
 
     def _ld_m16_sp(self, operandAddr):
-        self.Memory.writeWord(self.CoreWords.SP, operandAddr)
+        self.Bus.writeWord(operandAddr, self.CoreWords.SP)
         return None, None
 
     def _ld_a_mr16(self,register):
-        byteValue = self.Memory.readByte(register)
+        byteValue = self.Bus.readByte(register)
         self.CoreReg.A = byteValue
         return None, None
 
@@ -1316,30 +1316,30 @@ class CPU(SingletonBase):
     #======================================================================
     # LD r, (HL)
     #======================================================================
-    def _ld_a_mhl(self, operandAddr): self.CoreReg.A = self.Memory.readByte(self.CoreWords.HL); return None, None
-    def _ld_b_mhl(self, operandAddr): self.CoreReg.B = self.Memory.readByte(self.CoreWords.HL); return None, None
-    def _ld_c_mhl(self, operandAddr): self.CoreReg.C = self.Memory.readByte(self.CoreWords.HL); return None, None
-    def _ld_d_mhl(self, operandAddr): self.CoreReg.D = self.Memory.readByte(self.CoreWords.HL); return None, None
-    def _ld_e_mhl(self, operandAddr): self.CoreReg.E = self.Memory.readByte(self.CoreWords.HL); return None, None
+    def _ld_a_mhl(self, operandAddr): self.CoreReg.A = self.Bus.readByte(self.CoreWords.HL); return None, None
+    def _ld_b_mhl(self, operandAddr): self.CoreReg.B = self.Bus.readByte(self.CoreWords.HL); return None, None
+    def _ld_c_mhl(self, operandAddr): self.CoreReg.C = self.Bus.readByte(self.CoreWords.HL); return None, None
+    def _ld_d_mhl(self, operandAddr): self.CoreReg.D = self.Bus.readByte(self.CoreWords.HL); return None, None
+    def _ld_e_mhl(self, operandAddr): self.CoreReg.E = self.Bus.readByte(self.CoreWords.HL); return None, None
     def _ld_h_mhl(self, operandAddr):
-        mhl_value = self.Memory.readByte(self.CoreWords.HL)
+        mhl_value = self.Bus.readByte(self.CoreWords.HL)
         self.CoreReg.H = mhl_value
         return None, None
     def _ld_l_mhl(self, operandAddr): 
-        mhl_value = self.Memory.readByte(self.CoreWords.HL)
+        mhl_value = self.Bus.readByte(self.CoreWords.HL)
         self.CoreReg.L = mhl_value
         return None, None
 
     #======================================================================
     # LD (HL), r
     #======================================================================
-    def _ld_mhl_a(self, operandAddr): self.Memory.writeByte(self.CoreReg.A, self.CoreWords.HL); return None, None
-    def _ld_mhl_b(self, operandAddr): self.Memory.writeByte(self.CoreReg.B, self.CoreWords.HL); return None, None
-    def _ld_mhl_c(self, operandAddr): self.Memory.writeByte(self.CoreReg.C, self.CoreWords.HL); return None, None
-    def _ld_mhl_d(self, operandAddr): self.Memory.writeByte(self.CoreReg.D, self.CoreWords.HL); return None, None
-    def _ld_mhl_e(self, operandAddr): self.Memory.writeByte(self.CoreReg.E, self.CoreWords.HL); return None, None
-    def _ld_mhl_h(self, operandAddr): self.Memory.writeByte(self.CoreReg.H, self.CoreWords.HL); return None, None
-    def _ld_mhl_l(self, operandAddr): self.Memory.writeByte(self.CoreReg.L, self.CoreWords.HL); return None, None
+    def _ld_mhl_a(self, operandAddr): self.Bus.writeByte(self.CoreWords.HL, self.CoreReg.A); return None, None
+    def _ld_mhl_b(self, operandAddr): self.Bus.writeByte(self.CoreWords.HL, self.CoreReg.B); return None, None
+    def _ld_mhl_c(self, operandAddr): self.Bus.writeByte(self.CoreWords.HL, self.CoreReg.C); return None, None
+    def _ld_mhl_d(self, operandAddr): self.Bus.writeByte(self.CoreWords.HL, self.CoreReg.D); return None, None
+    def _ld_mhl_e(self, operandAddr): self.Bus.writeByte(self.CoreWords.HL, self.CoreReg.E); return None, None
+    def _ld_mhl_h(self, operandAddr): self.Bus.writeByte(self.CoreWords.HL, self.CoreReg.H); return None, None
+    def _ld_mhl_l(self, operandAddr): self.Bus.writeByte(self.CoreWords.HL, self.CoreReg.L); return None, None
     
     def _add_a_r8(self,register):
         # Add the value of the provided 8 bit register to the accumulator
@@ -1380,10 +1380,10 @@ class CPU(SingletonBase):
         self.CoreReg.A = self._add_a_r8(self.CoreReg.L)
         return None, None
     def _add_a_mhl(self,operandAddr):
-        self.CoreReg.A = self._add_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        self.CoreReg.A = self._add_a_r8(self.Bus.readByte(self.CoreWords.HL))
         return None, None
     def _add_a_d8(self,operandAddr):
-        d8 = self.Memory.readByte(operandAddr)
+        d8 = self.Bus.readByte(operandAddr)
         self.CoreReg.A = self._add_a_r8(d8)
         return None, None
 
@@ -1425,10 +1425,10 @@ class CPU(SingletonBase):
         self.CoreReg.A = self._adc_a_r8(self.CoreReg.L)
         return None, None
     def _adc_a_mhl(self,operandAddr):
-        self.CoreReg.A = self._adc_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        self.CoreReg.A = self._adc_a_r8(self.Bus.readByte(self.CoreWords.HL))
         return None, None
     def _adc_a_d8(self,operandAddr):
-        d8 = self.Memory.readByte(operandAddr)
+        d8 = self.Bus.readByte(operandAddr)
         self.CoreReg.A = self._adc_a_r8(d8)
         return None, None
 
@@ -1467,10 +1467,10 @@ class CPU(SingletonBase):
         self.CoreReg.A = self._sub_a_r8(self.CoreReg.L)
         return None, None
     def _sub_a_mhl(self,operandAddr):
-        self.CoreReg.A = self._sub_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        self.CoreReg.A = self._sub_a_r8(self.Bus.readByte(self.CoreWords.HL))
         return None, None
     def _sub_a_d8(self,operandAddr):
-        d8 = self.Memory.readByte(operandAddr)
+        d8 = self.Bus.readByte(operandAddr)
         self.CoreReg.A = self._sub_a_r8(d8)
         return None, None
     
@@ -1509,10 +1509,10 @@ class CPU(SingletonBase):
         self.CoreReg.A = self._sbc_a_r8(self.CoreReg.L)
         return None, None
     def _sbc_a_mhl(self,operandAddr):
-        self.CoreReg.A = self._sbc_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        self.CoreReg.A = self._sbc_a_r8(self.Bus.readByte(self.CoreWords.HL))
         return None, None
     def _sbc_a_d8(self,operandAddr):
-        d8 = self.Memory.readByte(operandAddr)
+        d8 = self.Bus.readByte(operandAddr)
         self.CoreReg.A = self._sbc_a_r8(d8)
         return None, None
     
@@ -1550,10 +1550,10 @@ class CPU(SingletonBase):
         self._and_a_r8(self.CoreReg.L)
         return None, None
     def _and_a_mhl(self,operandAddr):
-        self._and_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        self._and_a_r8(self.Bus.readByte(self.CoreWords.HL))
         return None, None
     def _and_a_d8(self,operandAddr):
-        d8 = self.Memory.readByte(operandAddr)
+        d8 = self.Bus.readByte(operandAddr)
         self._and_a_r8(d8)
         return None, None
 
@@ -1591,10 +1591,10 @@ class CPU(SingletonBase):
         self.xor_a_r8(self.CoreReg.L)
         return None, None
     def _xor_a_mhl(self,operandAddr):
-        self.xor_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        self.xor_a_r8(self.Bus.readByte(self.CoreWords.HL))
         return None, None
     def _xor_a_d8(self,operandAddr):
-        d8 = self.Memory.readByte(operandAddr)
+        d8 = self.Bus.readByte(operandAddr)
         self.xor_a_r8(d8)
         return None, None
     
@@ -1631,10 +1631,10 @@ class CPU(SingletonBase):
         self._or_a_r8(self.CoreReg.L)
         return None, None
     def _or_a_mhl(self,operandAddr):
-        self._or_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        self._or_a_r8(self.Bus.readByte(self.CoreWords.HL))
         return None, None
     def _or_a_d8(self,operandAddr):
-        d8 = self.Memory.readByte(operandAddr)
+        d8 = self.Bus.readByte(operandAddr)
         self._or_a_r8(d8)
         return None, None
     
@@ -1673,10 +1673,10 @@ class CPU(SingletonBase):
         self._cp_a_r8(self.CoreReg.L)
         return None, None
     def _cp_a_mhl(self,operandAddr):
-        self._cp_a_r8(self.Memory.readByte(self.CoreWords.HL))
+        self._cp_a_r8(self.Bus.readByte(self.CoreWords.HL))
         return None, None
     def _cp_a_d8(self,operandAddr):
-        d8 = self.Memory.readByte(operandAddr)
+        d8 = self.Bus.readByte(operandAddr)
         self._cp_a_r8(d8)
         return None, None
     
@@ -1703,9 +1703,9 @@ class CPU(SingletonBase):
         # Or do I need to decrement by 1, write the first byte, then decrement by 1 again and write the second byte?
         
         self.CoreWords.SP = (self.CoreWords.SP - 1) & 0xFFFF
-        self.Memory.writeByte(msB, self.CoreWords.SP)
+        self.Bus.writeByte(self.CoreWords.SP, msB)
         self.CoreWords.SP = (self.CoreWords.SP - 1) & 0xFFFF
-        self.Memory.writeByte(lsB, self.CoreWords.SP)
+        self.Bus.writeByte(self.CoreWords.SP, lsB)
 
     def _push_af(self,operandAddr):
         # Push AF register pair onto stack
@@ -1729,9 +1729,9 @@ class CPU(SingletonBase):
     
     def _perform_pop(self):
         # Pop two bytes from stack into register pair
-        lsB = self.Memory.readByte(self.CoreWords.SP)
+        lsB = self.Bus.readByte(self.CoreWords.SP)
         self.CoreWords.SP = (self.CoreWords.SP + 1) & 0xFFFF
-        msB = self.Memory.readByte(self.CoreWords.SP)
+        msB = self.Bus.readByte(self.CoreWords.SP)
         self.CoreWords.SP = (self.CoreWords.SP + 1) & 0xFFFF
 
         # Combine the two bytes into a single word
@@ -1766,18 +1766,18 @@ class CPU(SingletonBase):
         # Decrement SP by 2
         self.CoreWords.SP = (self.CoreWords.SP - 2) & 0xFFFF
         # Push return address onto stack (writeWord handles little-endian)
-        self.Memory.writeWord(return_addr, self.CoreWords.SP)
+        self.Bus.writeWord(self.CoreWords.SP, return_addr)
         # Return the target address as the PC override and cycle count
         return target_addr, 24
 
     def _call_a16(self, operandAddr):
         # operandAddr is PC+1 here. Read the 16-bit target address from memory.
-        target_addr = self.Memory.readWord(operandAddr)
+        target_addr = self.Bus.readWord(operandAddr)
         return self._perform_call(target_addr)
 
     def _call_nz_a16(self, operandAddr):
         if self.Flags.z == 0:
-            target_addr = self.Memory.readWord(operandAddr)
+            target_addr = self.Bus.readWord(operandAddr)
             return self._perform_call(target_addr)
         else:
             # Call not taken, PC advances normally in step(), return cycle override
@@ -1785,21 +1785,21 @@ class CPU(SingletonBase):
 
     def _call_z_a16(self, operandAddr):
         if self.Flags.z == 1:
-            target_addr = self.Memory.readWord(operandAddr)
+            target_addr = self.Bus.readWord(operandAddr)
             return self._perform_call(target_addr)
         else:
             return None, 12
 
     def _call_nc_a16(self, operandAddr):
         if self.Flags.c == 0:
-            target_addr = self.Memory.readWord(operandAddr)
+            target_addr = self.Bus.readWord(operandAddr)
             return self._perform_call(target_addr)
         else:
             return None, 12
 
     def _call_c_a16(self, operandAddr):
         if self.Flags.c == 1:
-            target_addr = self.Memory.readWord(operandAddr)
+            target_addr = self.Bus.readWord(operandAddr)
             return self._perform_call(target_addr)
         else:
             return None, 12
@@ -1811,33 +1811,33 @@ class CPU(SingletonBase):
 
     def _jp_a16(self, operandAddr):
         # Read the 16-bit target address from memory
-        target_addr = self.Memory.readWord(operandAddr)
+        target_addr = self.Bus.readWord(operandAddr)
         return self._perform_jump(target_addr)
     
     def _jp_nz_a16(self, operandAddr):
         if self.Flags.z == 0:
-            target_addr = self.Memory.readWord(operandAddr)
+            target_addr = self.Bus.readWord(operandAddr)
             return self._perform_jump(target_addr)
         else:
             return None, 12
 
     def _jp_z_a16(self, operandAddr):
         if self.Flags.z == 1:
-            target_addr = self.Memory.readWord(operandAddr)
+            target_addr = self.Bus.readWord(operandAddr)
             return self._perform_jump(target_addr)
         else:
             return None, 12
         
     def _jp_nc_a16(self, operandAddr):
         if self.Flags.c == 0:
-            target_addr = self.Memory.readWord(operandAddr)
+            target_addr = self.Bus.readWord(operandAddr)
             return self._perform_jump(target_addr)
         else:
             return None, 12
         
     def _jp_c_a16(self, operandAddr):
         if self.Flags.c == 1:
-            target_addr = self.Memory.readWord(operandAddr)
+            target_addr = self.Bus.readWord(operandAddr)
             return self._perform_jump(target_addr)
         else:
             return None, 12
@@ -1849,9 +1849,9 @@ class CPU(SingletonBase):
 
 
     def _perform_ret(self):
-        lsB = self.Memory.readByte(self.CoreWords.SP)
+        lsB = self.Bus.readByte(self.CoreWords.SP)
         self.CoreWords.SP = (self.CoreWords.SP + 1) & 0xFFFF
-        msB = self.Memory.readByte(self.CoreWords.SP)
+        msB = self.Bus.readByte(self.CoreWords.SP)
         self.CoreWords.SP = (self.CoreWords.SP + 1) & 0xFFFF
 
         target_addr = (msB.astype(Word) << 8) | lsB
@@ -1899,7 +1899,7 @@ class CPU(SingletonBase):
         # Or do I need to decrement by 1, write the first byte, then decrement by 1 again and write the second byte?
         self.CoreWords.SP = (self.CoreWords.SP - 2) & 0xFFFF
         # Push return address onto stack
-        self.Memory.writeWord(return_addr, self.CoreWords.SP)
+        self.Bus.writeWord(self.CoreWords.SP, return_addr)
         # Return the target address as the PC override and cycle count
         return target_addr, 16
 
@@ -1931,12 +1931,12 @@ class CPU(SingletonBase):
 
     def _ld_ma16_a(self, operandAddr):
         # Load the accumulator into the memory location pointed to by the 16-bit address in operandAddr
-        self.Memory.writeByte(self.CoreReg.A, operandAddr)
+        self.Bus.writeByte(operandAddr, self.CoreReg.A)
         return None, None
 
     def _ld_a_ma16(self, operandAddr):
         # Load the value from the memory location pointed to by the 16-bit address in operandAddr into the accumulator
-        self.CoreReg.A = self.Memory.readByte(operandAddr)
+        self.CoreReg.A = self.Bus.readByte(operandAddr)
         return None, None
     
 
@@ -1946,25 +1946,25 @@ class CPU(SingletonBase):
     def _ldh_ma8_a(self, operandAddr):
         # LDH (a8), A - operandAddr is the immediate a8 value
         address = 0xFF00 + operandAddr
-        self.Memory.writeByte(self.CoreReg.A, address)
+        self.Bus.writeByte(address, self.CoreReg.A)
         return None, None
 
     def _ldh_a_ma8(self, operandAddr):
         # LDH A, (a8) - operandAddr is the immediate a8 value
         address = 0xFF00 + operandAddr
-        self.CoreReg.A = self.Memory.readByte(address)
+        self.CoreReg.A = self.Bus.readByte(address)
         return None, None
 
     def _ldh_mc_a(self, operandAddr):
         # LDH (C), A - operandAddr is ignored
         address = 0xFF00 + self.CoreReg.C.astype(Word)
-        self.Memory.writeByte(self.CoreReg.A, address)
+        self.Bus.writeByte(address, self.CoreReg.A)
         return None, None
 
     def _ldh_a_mc(self, operandAddr):
         # LDH A, (C) - operandAddr is ignored
         address = 0xFF00 + self.CoreReg.C.astype(Word)
-        self.CoreReg.A = self.Memory.readByte(address)
+        self.CoreReg.A = self.Bus.readByte(address)
         return None, None
     
 
@@ -2066,9 +2066,9 @@ class CPU(SingletonBase):
     def _cb_rlc_h(self, operandAddr): self.CoreReg.H = self._rlc_r8(self.CoreReg.H); return None, None
     def _cb_rlc_l(self, operandAddr): self.CoreReg.L = self._rlc_r8(self.CoreReg.L); return None, None
     def _cb_rlc_mhl(self, operandAddr):
-        original = self.Memory.readByte(self.CoreWords.HL)
+        original = self.Bus.readByte(self.CoreWords.HL)
         result = self._rlc_r8(original)
-        self.Memory.writeByte(result, self.CoreWords.HL)
+        self.Bus.writeByte(self.CoreWords.HL, result)
 
         return None, None
     def _cb_rlc_a(self, operandAddr): self.CoreReg.A = self._rlc_r8(self.CoreReg.A); return None, None
@@ -2093,9 +2093,9 @@ class CPU(SingletonBase):
     def _cb_rrc_h(self, operandAddr): self.CoreReg.H = self._rrc_r8(self.CoreReg.H); return None, None
     def _cb_rrc_l(self, operandAddr): self.CoreReg.L = self._rrc_r8(self.CoreReg.L); return None, None
     def _cb_rrc_mhl(self, operandAddr):
-        original = self.Memory.readByte(self.CoreWords.HL)
+        original = self.Bus.readByte(self.CoreWords.HL)
         result = self._rrc_r8(original)
-        self.Memory.writeByte(result, self.CoreWords.HL)
+        self.Bus.writeByte(self.CoreWords.HL, result)
         return None, None
     def _cb_rrc_a(self, operandAddr): self.CoreReg.A = self._rrc_r8(self.CoreReg.A); return None, None
     
@@ -2125,9 +2125,9 @@ class CPU(SingletonBase):
     def _cb_rl_h(self, operandAddr): self.CoreReg.H = self._cb_rl_r8(self.CoreReg.H); return None, None
     def _cb_rl_l(self, operandAddr): self.CoreReg.L = self._cb_rl_r8(self.CoreReg.L); return None, None
     def _cb_rl_mhl(self, operandAddr):
-        original = self.Memory.readByte(self.CoreWords.HL)
+        original = self.Bus.readByte(self.CoreWords.HL)
         result = self._cb_rl_r8(original)
-        self.Memory.writeByte(result, self.CoreWords.HL)
+        self.Bus.writeByte(self.CoreWords.HL, result)
         return None, None
     def _cb_rl_a(self, operandAddr): self.CoreReg.A = self._cb_rl_r8(self.CoreReg.A); return None, None
     
@@ -2158,9 +2158,9 @@ class CPU(SingletonBase):
     def _cb_rr_h(self, operandAddr): self.CoreReg.H = self._cb_rr_r8(self.CoreReg.H); return None, None
     def _cb_rr_l(self, operandAddr): self.CoreReg.L = self._cb_rr_r8(self.CoreReg.L); return None, None
     def _cb_rr_mhl(self, operandAddr):
-        original = self.Memory.readByte(self.CoreWords.HL)
+        original = self.Bus.readByte(self.CoreWords.HL)
         result = self._cb_rr_r8(original)
-        self.Memory.writeByte(result, self.CoreWords.HL)
+        self.Bus.writeByte(self.CoreWords.HL, result)
         return None, None
     def _cb_rr_a(self, operandAddr): self.CoreReg.A = self._cb_rr_r8(self.CoreReg.A); return None, None
     
@@ -2189,9 +2189,9 @@ class CPU(SingletonBase):
     def _cb_sla_l(self, operandAddr): self.CoreReg.L = self._cb_sla_r8(self.CoreReg.L); return None, None
     def _cb_sla_a(self, operandAddr): self.CoreReg.A = self._cb_sla_r8(self.CoreReg.A); return None, None
     def _cb_sla_mhl(self, operandAddr):
-        val = self.Memory.readByte(self.CoreWords.HL)
+        val = self.Bus.readByte(self.CoreWords.HL)
         res = self._cb_sla_r8(val)
-        self.Memory.writeByte(res, self.CoreWords.HL)
+        self.Bus.writeByte(self.CoreWords.HL, res)
         return None, None
 
     def _cb_sra_r8(self, register):
@@ -2215,9 +2215,9 @@ class CPU(SingletonBase):
     def _cb_sra_l(self, operandAddr): self.CoreReg.L = self._cb_sra_r8(self.CoreReg.L); return None, None
     def _cb_sra_a(self, operandAddr): self.CoreReg.A = self._cb_sra_r8(self.CoreReg.A); return None, None
     def _cb_sra_mhl(self, operandAddr):
-        val = self.Memory.readByte(self.CoreWords.HL)
+        val = self.Bus.readByte(self.CoreWords.HL)
         res = self._cb_sra_r8(val)
-        self.Memory.writeByte(res, self.CoreWords.HL)
+        self.Bus.writeByte(self.CoreWords.HL, res)
         return None, None
 
     def _cb_swap_r8(self, register):
@@ -2240,9 +2240,9 @@ class CPU(SingletonBase):
     def _cb_swap_l(self, operandAddr): self.CoreReg.L = self._cb_swap_r8(self.CoreReg.L); return None, None
     def _cb_swap_a(self, operandAddr): self.CoreReg.A = self._cb_swap_r8(self.CoreReg.A); return None, None
     def _cb_swap_mhl(self, operandAddr):
-        val = self.Memory.readByte(self.CoreWords.HL)
+        val = self.Bus.readByte(self.CoreWords.HL)
         res = self._cb_swap_r8(val)
-        self.Memory.writeByte(res, self.CoreWords.HL)
+        self.Bus.writeByte(self.CoreWords.HL, res)
         return None, None
 
     def _cb_srl_r8(self, register):
@@ -2266,9 +2266,9 @@ class CPU(SingletonBase):
     def _cb_srl_l(self, operandAddr): self.CoreReg.L = self._cb_srl_r8(self.CoreReg.L); return None, None
     def _cb_srl_a(self, operandAddr): self.CoreReg.A = self._cb_srl_r8(self.CoreReg.A); return None, None
     def _cb_srl_mhl(self, operandAddr):
-        val = self.Memory.readByte(self.CoreWords.HL)
+        val = self.Bus.readByte(self.CoreWords.HL)
         res = self._cb_srl_r8(val)
-        self.Memory.writeByte(res, self.CoreWords.HL)
+        self.Bus.writeByte(self.CoreWords.HL, res)
         return None, None
 
     #======================================================================

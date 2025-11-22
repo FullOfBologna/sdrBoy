@@ -1,7 +1,7 @@
 import pytest
 
 from CPU import CPU
-from Memory import Memory
+from Bus import Bus
 import numpy as np
 
 #==========================================
@@ -9,21 +9,29 @@ import numpy as np
 #==========================================
 
 @pytest.fixture(scope="function")
-def cpu():
+def cpu(bus): # Added bus dependency
     cpu = CPU()
     cpu.Flags.flagReset()
-
+    # cpu.Bus is already the singleton, which 'bus' fixture also uses/resets.
+    # We don't strictly need to assign cpu.Bus = bus because it's a singleton,
+    # but the dependency ensures 'bus' fixture runs first (init PPU).
+    
     yield cpu 
 
     cpu.reset() # Reset Singleton state for next test
 
 @pytest.fixture(scope="function")
-def mem():
-    mem = Memory()
+def bus():
+    bus = Bus()
+    # Ensure PPU is initialized and attached
+    from PPU import PPU
+    bus.ppu = PPU()
+    
+    yield bus
 
-    yield mem
-
-    mem.reset()
+    bus.reset()
+    if bus.ppu:
+        bus.ppu.reset() # Reset PPU singleton too
 
 #==========================================
 #           OP CODE TEST CASES            
@@ -166,7 +174,7 @@ class TestOpCodes:
 
     # Load (BC), A / Load (DE), A / Load (HL), A test cases
     ld_mr16_a_test_cases = [
-        # reg_name, mem_addr, initial_a, expected_mem_value, id
+        # reg_name, bus_addr, initial_a, expected_bus_value, id
         pytest.param("BC", 0xC000, 0x55, 0x55, id="LD (BC), A: Basic"),
         pytest.param("DE", 0xC001, 0x00, 0x00, id="LD (DE), A: Zero"),
         pytest.param("HL", 0xC002, 0xFF, 0xFF, id="LD (HL), A: Max"),
@@ -178,7 +186,7 @@ class TestOpCodes:
     ]
 
     ld_m16_sp_test_cases = [
-        # mem_addr, initial_sp, expected_lsb, expected_msb, id
+        # bus_addr, initial_sp, expected_lsb, expected_msb, id
         pytest.param(0xC000, 0x1234, 0x34, 0x12, id="LD (a16), SP: Basic"),
         pytest.param(0xD000, 0x0000, 0x00, 0x00, id="LD (a16), SP: Zero"),
         pytest.param(0xE000, 0xFFFF, 0xFF, 0xFF, id="LD (a16), SP: Max"),
@@ -186,7 +194,7 @@ class TestOpCodes:
     ]
 #
     ld_a_mr16_test_cases = [
-        # reg_name, mem_addr, initial_mem_value, expected_a, id
+        # reg_name, bus_addr, initial_bus_value, expected_a, id
         pytest.param("BC", 0xC000, 0x55, 0x55, id="LD A, (BC): Basic"),
         pytest.param("DE", 0xC001, 0x00, 0x00, id="LD A, (DE): Zero"),
         pytest.param("HL", 0xC002, 0xFF, 0xFF, id="LD A, (HL): Max"),
@@ -266,7 +274,7 @@ class TestOpCodes:
 
 
     ld_r8_mhl_test_cases = [
-        # dest_reg, initial_hl, initial_mem_value, expected_dest_value, id
+        # dest_reg, initial_hl, initial_bus_value, expected_dest_value, id
         pytest.param("A", 0xC000, 0x12, 0x12, id="LD A, (HL): Basic"),
         pytest.param("B", 0xC001, 0x34, 0x34, id="LD B, (HL): Basic"),
         pytest.param("C", 0xC002, 0x56, 0x56, id="LD C, (HL): Basic"),
@@ -277,7 +285,7 @@ class TestOpCodes:
     ]
 
     # Test cases for LD (HL), r8 instructions
-    # Format: target_addr, src_reg, initial_src_value (None if derived), expected_mem_value, id
+    # Format: target_addr, src_reg, initial_src_value (None if derived), expected_bus_value, id
     ld_mhl_r8_test_cases = [
         # For standard registers, we set an initial value and expect it to be written.
         pytest.param(0xC123, "B", 0xAB, 0xAB, id="LD (HL), B: Basic"),
@@ -535,7 +543,7 @@ class TestOpCodes:
     ]
 
     # Test cases for LDH instructions (using 0xFF00 + C or 0xFF00 + a8)
-    # Format: method_name, initial_c_or_a8, initial_a, initial_mem_value, expected_a, expected_mem_value, id
+    # Format: method_name, initial_c_or_a8, initial_a, initial_bus_value, expected_a, expected_bus_value, id
     ldh_test_cases = [
         # --- LDH A, (C) ---
         pytest.param("_ldh_a_mc", 0x42, 0x00, 0x55, 0x55, 0x55, id="LDH A, (C): Load 0x55"),
@@ -969,7 +977,7 @@ class TestOpCodes:
         """Tests 8-bit immediate load methods (_ld_X_d8)"""
         # Arrange
         operand_address = 0xC051  # Example address for d8 (WRAM)
-        cpu.Memory.writeByte(d8_value, operand_address)
+        cpu.Bus.writeByte(operand_address, d8_value)
         initial_flags = cpu.Flags.F
         instruction_method = getattr(cpu, method_name)
         
@@ -995,8 +1003,8 @@ class TestOpCodes:
         msb = (d16_value >> 8) & 0xFF
         
         # Write LSB and MSB to memory (Little Endian)
-        cpu.Memory.writeByte(lsb, operand_address)
-        cpu.Memory.writeByte(msb, operand_address + 1)
+        cpu.Bus.writeByte(operand_address, lsb)
+        cpu.Bus.writeByte(operand_address + 1, msb)
         
         initial_flags = cpu.Flags.F
         instruction_method = getattr(cpu, method_name)
@@ -1044,7 +1052,7 @@ class TestOpCodes:
         """Tests memory operations at the HL address (_inc_mhl, _dec_mhl)"""
         # Arrange
         cpu.CoreWords.HL = 0xC051  # Example memory location
-        cpu.Memory.writeByte(initial_value, cpu.CoreWords.HL)
+        cpu.Bus.writeByte(cpu.CoreWords.HL, initial_value)
         cpu.Flags.F = 0x00  # Reset flags for consistent testing
         instruction_method = getattr(cpu, method_name)
         
@@ -1052,7 +1060,7 @@ class TestOpCodes:
         pc_override, cycle_override = instruction_method(None)
         
         # Assert
-        final_value = cpu.Memory.readByte(cpu.CoreWords.HL)
+        final_value = cpu.Bus.readByte(cpu.CoreWords.HL)
         assert final_value == expected_value, f"Memory value expected {expected_value:02X}, got {final_value:02X}"
         
         # Parse expected flag string into individual flag expectations
@@ -1155,24 +1163,24 @@ class TestOpCodes:
         assert cycle_override is None, "Cycle override should be None"
 
 
-    @pytest.mark.parametrize("reg_name, mem_addr, initial_a, expected_mem_value", ld_mr16_a_test_cases)
-    def test_ld_mr16_a(self, cpu, reg_name, mem_addr, initial_a, expected_mem_value):
+    @pytest.mark.parametrize("reg_name, bus_addr, initial_a, expected_bus_value", ld_mr16_a_test_cases)
+    def test_ld_mr16_a(self, cpu, reg_name, bus_addr, initial_a, expected_bus_value):
         """Tests load (BC), A / load (DE), A / load (HL), A instructions"""
         # Arrange
-        cpu.CoreWords.HL = mem_addr
+        cpu.CoreWords.HL = bus_addr
         initial_hl = cpu.CoreWords.HL
         if reg_name == "HL+":
-            cpu.CoreWords.HL = mem_addr
+            cpu.CoreWords.HL = bus_addr
             method_name = "_ld_mhlp_a"
         elif reg_name == "HL-":
-            cpu.CoreWords.HL = mem_addr
+            cpu.CoreWords.HL = bus_addr
             method_name = "_ld_mhlm_a"
         else:
-            setattr(cpu.CoreWords, reg_name, mem_addr)  # Set r16 to point to memory address
+            setattr(cpu.CoreWords, reg_name, bus_addr)  # Set r16 to point to memory address
             method_name = f"_ld_m{reg_name.lower()}_a"
 
         cpu.CoreReg.A = initial_a  # Set initial value of A
-        cpu.Memory.writeByte(0x00, mem_addr)  # Initialize memory location
+        cpu.Bus.writeByte(bus_addr, 0x00)  # Initialize memory location
 
         instruction_method = getattr(cpu, method_name)
 
@@ -1180,57 +1188,57 @@ class TestOpCodes:
         pc_override, cycle_override = instruction_method(None)
 
         # Assert
-        memory_value = cpu.Memory.readByte(mem_addr)
-        assert memory_value == expected_mem_value, f"Memory at {mem_addr:04X} expected {expected_mem_value:02X}, got {memory_value:02X}"
+        memory_value = cpu.Bus.readByte(bus_addr)
+        assert memory_value == expected_bus_value, f"Memory at {bus_addr:04X} expected {expected_bus_value:02X}, got {memory_value:02X}"
 
         if reg_name == "HL+":
-            assert cpu.CoreWords.HL == mem_addr + 1, "HL+ post-increment failed"
+            assert cpu.CoreWords.HL == bus_addr + 1, "HL+ post-increment failed"
         elif reg_name == "HL-":
-            assert cpu.CoreWords.HL == mem_addr - 1, "HL- post-decrement failed"
+            assert cpu.CoreWords.HL == bus_addr - 1, "HL- post-decrement failed"
         else:
             assert cpu.CoreWords.HL == initial_hl, "HL should not be modified"
 
         assert pc_override is None, "PC override should be None"
         assert cycle_override is None, "Cycle override should be None"
 
-    @pytest.mark.parametrize("mem_addr, initial_sp, expected_lsb, expected_msb", ld_m16_sp_test_cases)
-    def test_ld_m16_sp(self, cpu, mem_addr, initial_sp, expected_lsb, expected_msb):
+    @pytest.mark.parametrize("bus_addr, initial_sp, expected_lsb, expected_msb", ld_m16_sp_test_cases)
+    def test_ld_m16_sp(self, cpu, bus_addr, initial_sp, expected_lsb, expected_msb):
         """Tests load (a16), SP instruction"""
         # Arrange
         cpu.CoreWords.SP = initial_sp
-        cpu.Memory.writeByte(0x00, mem_addr)  # Initialize memory location
-        cpu.Memory.writeByte(0x00, mem_addr + 1)  # Initialize memory location + 1
+        cpu.Bus.writeByte(bus_addr, 0x00)  # Initialize memory location
+        cpu.Bus.writeByte(bus_addr + 1, 0x00)  # Initialize memory location + 1
 
         # Act
-        pc_override, cycle_override = cpu._ld_m16_sp(mem_addr)
+        pc_override, cycle_override = cpu._ld_m16_sp(bus_addr)
 
         # Assert
-        memory_lsb = cpu.Memory.readByte(mem_addr)
-        memory_msb = cpu.Memory.readByte(mem_addr + 1)
-        assert memory_lsb == expected_lsb, f"LSB at {mem_addr:04X} expected {expected_lsb:02X}, got {memory_lsb:02X}"
-        assert memory_msb == expected_msb, f"MSB at {mem_addr + 1:04X} expected {expected_msb:02X}, got {memory_msb:02X}"
+        memory_lsb = cpu.Bus.readByte(bus_addr)
+        memory_msb = cpu.Bus.readByte(bus_addr + 1)
+        assert memory_lsb == expected_lsb, f"LSB at {bus_addr:04X} expected {expected_lsb:02X}, got {memory_lsb:02X}"
+        assert memory_msb == expected_msb, f"MSB at {bus_addr + 1:04X} expected {expected_msb:02X}, got {memory_msb:02X}"
 
         assert pc_override is None, "PC override should be None"
         assert cycle_override is None, "Cycle override should be None"
 
-    @pytest.mark.parametrize("reg_name, mem_addr, initial_mem_value, expected_a", ld_a_mr16_test_cases)
-    def test_ld_a_mr16(self, cpu, reg_name, mem_addr, initial_mem_value, expected_a):
+    @pytest.mark.parametrize("reg_name, bus_addr, initial_bus_value, expected_a", ld_a_mr16_test_cases)
+    def test_ld_a_mr16(self, cpu, reg_name, bus_addr, initial_bus_value, expected_a):
         """Tests load A, (BC) / load A, (DE) / load A, (HL) instructions"""
         
         # Arrange
-        cpu.CoreWords.HL = mem_addr
+        cpu.CoreWords.HL = bus_addr
         initial_hl = cpu.CoreWords.HL
         if reg_name == "HL+":
-            cpu.CoreWords.HL = mem_addr
+            cpu.CoreWords.HL = bus_addr
             method_name = "_ld_a_mhlp"
         elif reg_name == "HL-":
-            cpu.CoreWords.HL = mem_addr
+            cpu.CoreWords.HL = bus_addr
             method_name = "_ld_a_mhlm"
         else:
-            setattr(cpu.CoreWords, reg_name, mem_addr)  # Set r16 to point to memory address
+            setattr(cpu.CoreWords, reg_name, bus_addr)  # Set r16 to point to memory address
             method_name = f"_ld_a_m{reg_name.lower()}"
 
-        cpu.Memory.writeByte(initial_mem_value, mem_addr)  # Initialize memory location
+        cpu.Bus.writeByte(bus_addr, initial_bus_value)  # Initialize memory location
 
         instruction_method = getattr(cpu, method_name)
 
@@ -1241,9 +1249,9 @@ class TestOpCodes:
         assert cpu.CoreReg.A == expected_a, f"A register expected {expected_a:02X}, got {cpu.CoreReg.A:02X}"
 
         if reg_name == "HL+":
-            assert cpu.CoreWords.HL == mem_addr + 1, "HL+ post-increment failed"
+            assert cpu.CoreWords.HL == bus_addr + 1, "HL+ post-increment failed"
         elif reg_name == "HL-":
-            assert cpu.CoreWords.HL == mem_addr - 1, "HL- post-decrement failed"
+            assert cpu.CoreWords.HL == bus_addr - 1, "HL- post-decrement failed"
         else:
             assert cpu.CoreWords.HL == initial_hl, "HL should not be modified"
 
@@ -1300,12 +1308,12 @@ class TestOpCodes:
         assert pc_override is None, "PC override should be None"
         assert cycle_override is None, "Cycle override should be None"
 
-    @pytest.mark.parametrize("dest_reg, initial_hl, initial_mem_value, expected_dest_value", ld_r8_mhl_test_cases)
-    def test_ld_r8_mhl(self, cpu, dest_reg, initial_hl, initial_mem_value, expected_dest_value):
+    @pytest.mark.parametrize("dest_reg, initial_hl, initial_bus_value, expected_dest_value", ld_r8_mhl_test_cases)
+    def test_ld_r8_mhl(self, cpu, dest_reg, initial_hl, initial_bus_value, expected_dest_value):
         """Tests load register from memory at HL (_ld_X_mhl)"""
         # Arrange
         cpu.CoreWords.HL = initial_hl
-        cpu.Memory.writeByte(initial_mem_value, initial_hl)
+        cpu.Bus.writeByte(initial_hl, initial_bus_value)
         initial_flags = cpu.Flags.F  # Save initial flag state
 
         method_name = f"_ld_{dest_reg.lower()}_mhl"
@@ -1326,12 +1334,12 @@ class TestOpCodes:
 
 # TODO - FIXME - Need to update how HL is accessed in the CPU class to first grab the initial value of HL, then do any manipulations on it
 
-    @pytest.mark.parametrize("target_addr, src_reg, initial_src_value, expected_mem_value", ld_mhl_r8_test_cases)
-    def test_ld_mhl_r8(self, cpu, target_addr, src_reg, initial_src_value, expected_mem_value):
+    @pytest.mark.parametrize("target_addr, src_reg, initial_src_value, expected_bus_value", ld_mhl_r8_test_cases)
+    def test_ld_mhl_r8(self, cpu, target_addr, src_reg, initial_src_value, expected_bus_value):
         """Tests load memory at HL from register (_ld_mhl_X)"""
         # Arrange
         cpu.CoreWords.HL = target_addr          # Set the target address. This also sets initial H and L.
-        cpu.Memory.writeByte(0x00, target_addr) # Initialize memory location to a known value.
+        cpu.Bus.writeByte(target_addr, 0x00) # Initialize memory location to a known value.
 
         # If the source register is not H or L, we must set its initial value.
         # If it IS H or L, its value is already correctly set by setting HL, so we do nothing.
@@ -1346,8 +1354,8 @@ class TestOpCodes:
         pc_override, cycle_override = instruction_method(None)
 
         # Assert
-        memory_value = cpu.Memory.readByte(target_addr)
-        assert memory_value == expected_mem_value, f"Memory at {target_addr:04X} expected {expected_mem_value:02X}, got {memory_value:02X}"
+        memory_value = cpu.Bus.readByte(target_addr)
+        assert memory_value == expected_bus_value, f"Memory at {target_addr:04X} expected {expected_bus_value:02X}, got {memory_value:02X}"
 
         final_flags = cpu.Flags.F
         assert final_flags == initial_flags, f"Flags changed unexpectedly ({initial_flags:02X} -> {final_flags:02X})"
@@ -1390,18 +1398,18 @@ class TestOpCodes:
         cpu.Flags.c = int(initial_flags[3])
 
         operand = None
-        mem_addr = 0xC050 # Default memory address for (HL) and d8
+        bus_addr = 0xC050 # Default memory address for (HL) and d8
 
         if source_type == 'r8':
             cpu.CoreReg.B = value # Use B as the representative r8 source
             method_name = f"_{op_type}_a_b"
         elif source_type == 'mhl':
-            cpu.CoreWords.HL = mem_addr
-            cpu.Memory.writeByte(value, mem_addr)
+            cpu.CoreWords.HL = bus_addr
+            cpu.Bus.writeByte(bus_addr, value)
             method_name = f"_{op_type}_a_mhl"
         elif source_type == 'd8':
-            cpu.Memory.writeByte(value, mem_addr) # Simulate fetching d8 from this address
-            operand = mem_addr
+            cpu.Bus.writeByte(bus_addr, value) # Simulate fetching d8 from this address
+            operand = bus_addr
             method_name = f"_{op_type}_a_d8"
         else:
             pytest.fail(f"Invalid source_type: {source_type}")
@@ -1510,18 +1518,18 @@ class TestOpCodes:
 
         # Write the target address into memory where the instruction expects it (PC+1, PC+2)
         # writeWord handles little-endian storage
-        operand_addr_in_mem = initial_pc + 1
-        cpu.Memory.writeWord(target_addr, operand_addr_in_mem)
+        operand_addr_in_bus = initial_pc + 1
+        cpu.Bus.writeWord(operand_addr_in_bus, target_addr)
 
         # Pre-fill stack location to ensure it gets overwritten if call is taken
         if call_taken:
-            cpu.Memory.writeWord(0x0000, expected_sp) # expected_sp is SP-2
+            cpu.Bus.writeWord(expected_sp, 0x0000) # expected_sp is SP-2
 
         instruction_method = getattr(cpu, method_name)
 
         # Act
         # Pass the address where the target address *starts* in memory (PC+1)
-        pc_override, cycle_override = instruction_method(operand_addr_in_mem)
+        pc_override, cycle_override = instruction_method(operand_addr_in_bus)
 
         # Assert
         assert cpu.CoreWords.SP == expected_sp, f"SP expected {expected_sp:04X}, got {cpu.CoreWords.SP:04X}"
@@ -1529,7 +1537,7 @@ class TestOpCodes:
         assert cycle_override == expected_cycles, f"Cycles expected {expected_cycles}, got {cycle_override}"
 
         if call_taken:
-            stack_val = cpu.Memory.readWord(expected_sp) # Read the pushed return address
+            stack_val = cpu.Bus.readWord(expected_sp) # Read the pushed return address
             assert stack_val == expected_stack_val, f"Stack value at {expected_sp:04X} expected {expected_stack_val:04X}, got {stack_val:04X}"
         else:
             # If call not taken, PC should not be overridden by the instruction method itself
@@ -1545,8 +1553,8 @@ class TestOpCodes:
         setattr(cpu.CoreWords, reg_pair_name, initial_value) # Set initial register value
 
         # Pre-clear stack locations
-        cpu.Memory.writeByte(0x00, initial_sp - 1)
-        cpu.Memory.writeByte(0x00, initial_sp - 2)
+        cpu.Bus.writeByte(initial_sp - 1, 0x00)
+        cpu.Bus.writeByte(initial_sp - 2, 0x00)
 
         method_name = f"_push_{reg_pair_name.lower()}"
         instruction_method = getattr(cpu, method_name)
@@ -1557,8 +1565,8 @@ class TestOpCodes:
         # Assert
         assert cpu.CoreWords.SP == expected_sp, f"SP expected {expected_sp:04X}, got {cpu.CoreWords.SP:04X}"
 
-        stack_val_msb = cpu.Memory.readByte(expected_sp + 1) # MSB is pushed first to SP-1
-        stack_val_lsb = cpu.Memory.readByte(expected_sp)     # LSB is pushed second to SP-2
+        stack_val_msb = cpu.Bus.readByte(expected_sp + 1) # MSB is pushed first to SP-1
+        stack_val_lsb = cpu.Bus.readByte(expected_sp)     # LSB is pushed second to SP-2
 
         assert stack_val_msb == expected_stack_msb, f"Stack MSB at {expected_sp + 1:04X} expected {expected_stack_msb:02X}, got {stack_val_msb:02X}"
         assert stack_val_lsb == expected_stack_lsb, f"Stack LSB at {expected_sp:04X} expected {expected_stack_lsb:02X}, got {stack_val_lsb:02X}"
@@ -1572,8 +1580,8 @@ class TestOpCodes:
         # Arrange
         cpu.CoreWords.SP = initial_sp
         # Write values to the stack (LSB at SP, MSB at SP+1)
-        cpu.Memory.writeByte(stack_lsb, initial_sp)
-        cpu.Memory.writeByte(stack_msb, initial_sp + 1)
+        cpu.Bus.writeByte(initial_sp, stack_lsb)
+        cpu.Bus.writeByte(initial_sp + 1, stack_msb)
 
         # Store initial flags if we need to check they weren't changed (for non-AF pops)
         initial_flags_val = cpu.Flags.F
@@ -1621,14 +1629,14 @@ class TestOpCodes:
         if initial_flags[3] != '-': cpu.Flags.c = int(initial_flags[3])
 
         # Write the target address into memory where the instruction expects it (PC+1, PC+2)
-        operand_addr_in_mem = initial_pc + 1
-        cpu.Memory.writeWord(target_addr, operand_addr_in_mem)
+        operand_addr_in_bus = initial_pc + 1
+        cpu.Bus.writeWord(operand_addr_in_bus, target_addr)
 
         instruction_method = getattr(cpu, method_name)
 
         # Act
         # Pass the address where the target address *starts* in memory (PC+1)
-        pc_override, cycle_override = instruction_method(operand_addr_in_mem)
+        pc_override, cycle_override = instruction_method(operand_addr_in_bus)
 
         # Assert
         assert pc_override == expected_pc_override, f"PC override expected {expected_pc_override}, got {pc_override}"
@@ -1664,7 +1672,7 @@ class TestOpCodes:
 
         # Write the return address to the stack where RET expects it
         # writeWord handles little-endian storage
-        cpu.Memory.writeWord(stack_ret_addr, initial_sp)
+        cpu.Bus.writeWord(initial_sp, stack_ret_addr)
 
         instruction_method = getattr(cpu, method_name)
 
@@ -1678,7 +1686,7 @@ class TestOpCodes:
 
         # If RET wasn't taken, ensure the stack wasn't accidentally read/modified
         if not ret_taken:
-            stack_val_after = cpu.Memory.readWord(initial_sp)
+            stack_val_after = cpu.Bus.readWord(initial_sp)
             assert stack_val_after == stack_ret_addr, f"Stack value at {initial_sp:04X} should be unchanged if RET not taken"
 
         # TODO: Add check for IME flag being set if/when _reti implements it
@@ -1691,7 +1699,7 @@ class TestOpCodes:
         cpu.CoreWords.SP = initial_sp
 
         # Pre-fill stack location to ensure it gets overwritten
-        cpu.Memory.writeWord(0x0000, expected_sp) # expected_sp is initial_sp - 2
+        cpu.Bus.writeWord(expected_sp, 0x0000) # expected_sp is initial_sp - 2
 
         instruction_method = getattr(cpu, method_name)
 
@@ -1704,16 +1712,16 @@ class TestOpCodes:
         assert cycle_override == expected_cycles, f"Cycles expected {expected_cycles}, got {cycle_override}"
 
         # Check the value pushed onto the stack (return address = PC + 1)
-        stack_val = cpu.Memory.readWord(expected_sp)
+        stack_val = cpu.Bus.readWord(expected_sp)
         assert stack_val == expected_stack_val, f"Stack value at {expected_sp:04X} expected {expected_stack_val:04X}, got {stack_val:04X}"
 
-    @pytest.mark.parametrize("method_name, initial_c_or_a8, initial_a, initial_mem_value, expected_a, expected_mem_value", ldh_test_cases)
-    def test_ldh_instructions(self, cpu, method_name, initial_c_or_a8, initial_a, initial_mem_value, expected_a, expected_mem_value):
+    @pytest.mark.parametrize("method_name, initial_c_or_a8, initial_a, initial_bus_value, expected_a, expected_bus_value", ldh_test_cases)
+    def test_ldh_instructions(self, cpu, method_name, initial_c_or_a8, initial_a, initial_bus_value, expected_a, expected_bus_value):
         """Tests LDH instructions: LDH A,(C), LDH (C),A, LDH A,(a8), LDH (a8),A"""
         # Arrange
         cpu.CoreReg.A = initial_a
         target_addr = 0xFF00 + initial_c_or_a8
-        cpu.Memory.writeByte(initial_mem_value, target_addr) # Pre-set memory value
+        cpu.Bus.writeByte(target_addr, initial_bus_value) # Pre-set memory value
 
         operand = None # Default operand
         is_store_instruction = method_name in ["_ldh_mc_a", "_ldh_ma8_a"]
@@ -1738,11 +1746,11 @@ class TestOpCodes:
              assert cpu.CoreReg.A == initial_a, f"Accumulator A should be unchanged ({initial_a:02X}), got {cpu.CoreReg.A:02X}"
 
         # Check Memory value
-        final_mem_value = cpu.Memory.readByte(target_addr)
+        final_bus_value = cpu.Bus.readByte(target_addr)
         if is_store_instruction:
-            assert final_mem_value == expected_mem_value, f"Memory at {target_addr:04X} expected {expected_mem_value:02X}, got {final_mem_value:02X}"
+            assert final_bus_value == expected_bus_value, f"Memory at {target_addr:04X} expected {expected_bus_value:02X}, got {final_bus_value:02X}"
         else: # For loads into A, memory should remain unchanged
-            assert final_mem_value == initial_mem_value, f"Memory at {target_addr:04X} should be unchanged ({initial_mem_value:02X}), got {final_mem_value:02X}"
+            assert final_bus_value == initial_bus_value, f"Memory at {target_addr:04X} should be unchanged ({initial_bus_value:02X}), got {final_bus_value:02X}"
 
 
         # Check C register is unchanged (it's only used for address calculation)
@@ -1763,7 +1771,7 @@ class TestOpCodes:
         # Set initial value in register or memory
         if register_name == "mhl":
             cpu.CoreWords.HL = target_hl_addr
-            cpu.Memory.writeByte(initial_value, target_hl_addr)
+            cpu.Bus.writeByte(target_hl_addr, initial_value)
         else:
             setattr(cpu.CoreReg, register_name, initial_value)
 
@@ -1779,7 +1787,7 @@ class TestOpCodes:
         # Assert
         # Check result in register or memory
         if register_name == "mhl":
-            final_value = cpu.Memory.readByte(target_hl_addr)
+            final_value = cpu.Bus.readByte(target_hl_addr)
             assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
         else:
             final_value = getattr(cpu.CoreReg, register_name)
@@ -1805,7 +1813,7 @@ class TestOpCodes:
         # Set initial value in register or memory
         if register_name == "mhl":
             cpu.CoreWords.HL = target_hl_addr
-            cpu.Memory.writeByte(initial_value, target_hl_addr)
+            cpu.Bus.writeByte(target_hl_addr, initial_value)
         else:
             setattr(cpu.CoreReg, register_name, initial_value)
 
@@ -1821,7 +1829,7 @@ class TestOpCodes:
         # Assert
         # Check result in register or memory
         if register_name == "mhl":
-            final_value = cpu.Memory.readByte(target_hl_addr)
+            final_value = cpu.Bus.readByte(target_hl_addr)
             assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
         else:
             final_value = getattr(cpu.CoreReg, register_name)
@@ -1847,7 +1855,7 @@ class TestOpCodes:
         # Set initial value in register or memory
         if register_name == "mhl":
             cpu.CoreWords.HL = target_hl_addr
-            cpu.Memory.writeByte(initial_value, target_hl_addr)
+            cpu.Bus.writeByte(target_hl_addr, initial_value)
         else:
             setattr(cpu.CoreReg, register_name, initial_value)
 
@@ -1863,7 +1871,7 @@ class TestOpCodes:
         # Assert
         # Check result in register or memory
         if register_name == "mhl":
-            final_value = cpu.Memory.readByte(target_hl_addr)
+            final_value = cpu.Bus.readByte(target_hl_addr)
             assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
         else:
             final_value = getattr(cpu.CoreReg, register_name)
@@ -1890,7 +1898,7 @@ class TestOpCodes:
         # Set initial value in register or memory
         if register_name == "mhl":
             cpu.CoreWords.HL = target_hl_addr
-            cpu.Memory.writeByte(initial_value, target_hl_addr)
+            cpu.Bus.writeByte(target_hl_addr, initial_value)
         else:
             setattr(cpu.CoreReg, register_name, initial_value)
 
@@ -1906,7 +1914,7 @@ class TestOpCodes:
         # Assert
         # Check result in register or memory
         if register_name == "mhl":
-            final_value = cpu.Memory.readByte(target_hl_addr)
+            final_value = cpu.Bus.readByte(target_hl_addr)
             assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
         else:
             final_value = getattr(cpu.CoreReg, register_name)
@@ -1932,7 +1940,7 @@ class TestOpCodes:
         # Set initial value in register or memory
         if register_name == "mhl":
             cpu.CoreWords.HL = target_hl_addr
-            cpu.Memory.writeByte(initial_value, target_hl_addr)
+            cpu.Bus.writeByte(target_hl_addr, initial_value)
         else:
             setattr(cpu.CoreReg, register_name, initial_value)
 
@@ -1948,7 +1956,7 @@ class TestOpCodes:
         # Assert
         # Check result in register or memory
         if register_name == "mhl":
-            final_value = cpu.Memory.readByte(target_hl_addr)
+            final_value = cpu.Bus.readByte(target_hl_addr)
             assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
         else:
             final_value = getattr(cpu.CoreReg, register_name)
@@ -1974,7 +1982,7 @@ class TestOpCodes:
         # Set initial value in register or memory
         if register_name == "mhl":
             cpu.CoreWords.HL = target_hl_addr
-            cpu.Memory.writeByte(initial_value, target_hl_addr)
+            cpu.Bus.writeByte(target_hl_addr, initial_value)
         else:
             setattr(cpu.CoreReg, register_name, initial_value)
 
@@ -1990,7 +1998,7 @@ class TestOpCodes:
         # Assert
         # Check result in register or memory
         if register_name == "mhl":
-            final_value = cpu.Memory.readByte(target_hl_addr)
+            final_value = cpu.Bus.readByte(target_hl_addr)
             assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
         else:
             final_value = getattr(cpu.CoreReg, register_name)
@@ -2016,7 +2024,7 @@ class TestOpCodes:
         # Set initial value in register or memory
         if register_name == "mhl":
             cpu.CoreWords.HL = target_hl_addr
-            cpu.Memory.writeByte(initial_value, target_hl_addr)
+            cpu.Bus.writeByte(target_hl_addr, initial_value)
         else:
             setattr(cpu.CoreReg, register_name, initial_value)
 
@@ -2032,7 +2040,7 @@ class TestOpCodes:
         # Assert
         # Check result in register or memory
         if register_name == "mhl":
-            final_value = cpu.Memory.readByte(target_hl_addr)
+            final_value = cpu.Bus.readByte(target_hl_addr)
             assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
         else:
             final_value = getattr(cpu.CoreReg, register_name)
@@ -2058,7 +2066,7 @@ class TestOpCodes:
         # Set initial value in register or memory
         if register_name == "mhl":
             cpu.CoreWords.HL = target_hl_addr
-            cpu.Memory.writeByte(initial_value, target_hl_addr)
+            cpu.Bus.writeByte(target_hl_addr, initial_value)
         else:
             setattr(cpu.CoreReg, register_name, initial_value)
 
@@ -2074,7 +2082,7 @@ class TestOpCodes:
         # Assert
         # Check result in register or memory
         if register_name == "mhl":
-            final_value = cpu.Memory.readByte(target_hl_addr)
+            final_value = cpu.Bus.readByte(target_hl_addr)
             assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
         else:
             final_value = getattr(cpu.CoreReg, register_name)
@@ -2101,7 +2109,7 @@ class TestOpCodes:
         # Set initial value in register or memory
         if register_name == "mhl":
             cpu.CoreWords.HL = target_hl_addr
-            cpu.Memory.writeByte(initial_value, target_hl_addr)
+            cpu.Bus.writeByte(target_hl_addr, initial_value)
         else:
             setattr(cpu.CoreReg, register_name, initial_value)
 
@@ -2117,7 +2125,7 @@ class TestOpCodes:
         # Assert
         # Check that the register/memory value has NOT changed
         if register_name == "mhl":
-            final_value = cpu.Memory.readByte(target_hl_addr)
+            final_value = cpu.Bus.readByte(target_hl_addr)
             assert final_value == initial_value, f"{method_name}: (HL) value should not change"
         else:
             final_value = getattr(cpu.CoreReg, register_name)
@@ -2143,7 +2151,7 @@ class TestOpCodes:
         # Set initial value in register or memory
         if register_name == "mhl":
             cpu.CoreWords.HL = target_hl_addr
-            cpu.Memory.writeByte(initial_value, target_hl_addr)
+            cpu.Bus.writeByte(target_hl_addr, initial_value)
         else:
             setattr(cpu.CoreReg, register_name, initial_value)
 
@@ -2156,7 +2164,7 @@ class TestOpCodes:
         # Assert
         # Check result in register or memory
         if register_name == "mhl":
-            final_value = cpu.Memory.readByte(target_hl_addr)
+            final_value = cpu.Bus.readByte(target_hl_addr)
             assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
         else:
             final_value = getattr(cpu.CoreReg, register_name)
@@ -2179,7 +2187,7 @@ class TestOpCodes:
         # Set initial value in register or memory
         if register_name == "mhl":
             cpu.CoreWords.HL = target_hl_addr
-            cpu.Memory.writeByte(initial_value, target_hl_addr)
+            cpu.Bus.writeByte(target_hl_addr, initial_value)
         else:
             setattr(cpu.CoreReg, register_name, initial_value)
 
@@ -2192,7 +2200,7 @@ class TestOpCodes:
         # Assert
         # Check result in register or memory
         if register_name == "mhl":
-            final_value = cpu.Memory.readByte(target_hl_addr)
+            final_value = cpu.Bus.readByte(target_hl_addr)
             assert final_value == expected_result, f"{method_name}: Expected (HL)={expected_result:02X}, got {final_value:02X}"
         else:
             final_value = getattr(cpu.CoreReg, register_name)

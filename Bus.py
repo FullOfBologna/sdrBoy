@@ -55,6 +55,11 @@ class Bus(SingletonBase):
             return self.wram[addr - 0xC000]
         elif 0xE000 <= addr <= 0xFDFF: # Echo RAM
             return self.wram[addr - 0xE000]
+        elif 0xFE00 <= addr <= 0xFE9F:
+            # OAM Area
+            if self.ppu is None:
+                raise MemoryAccessError(addr, "PPU not initialized in Bus readByte")
+            return self.ppu.oam[addr - 0xFE00]
         elif 0xFF40 <= addr <= 0xFF4B: 
             # PPU Registers
             if self.ppu is None:
@@ -100,6 +105,11 @@ class Bus(SingletonBase):
             if self.ppu is None:
                 raise MemoryAccessError(addr, "PPU not initialized in Bus writeByte")
             self.ppu.writeRegister(addr, value)
+        elif 0xFE00 <= addr <= 0xFE9F:
+            # OAM Area
+            if self.ppu is None:
+                raise MemoryAccessError(addr, "PPU not initialized in Bus writeByte")
+            self.ppu.oam[addr - 0xFE00] = value
         elif 0xFF00 <= addr <= 0xFF7F:
             # Other IO Registers
             self.io_regs[addr - 0xFF00] = value

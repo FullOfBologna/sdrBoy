@@ -68,7 +68,7 @@ class CPU(SingletonBase):
         opCode = self.Bus.readByte(currentPC)
 
         if opCode in self.lr35902_opCodes:
-            opCodeFunc, length, cycles = self.lr35902_opCodes[opCode]
+            opCodeFunc, length, cycles, _ = self.lr35902_opCodes[opCode]
 
             #Address of potential immediate operand
             operandAddress = (currentPC + 1) & 0xFFFF
@@ -751,7 +751,7 @@ class CPU(SingletonBase):
 
         # ---  opCode Implementations --- #
 
-    def _nop(self):
+    def _nop(self, operandAddr):
         # Program Counters won't do anything. Step Function will increment the cycles correctly
         return None, None
 

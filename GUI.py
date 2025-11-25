@@ -10,6 +10,8 @@ class GUI:
         self.root.title("SDRBoy - Game Boy Emulator")
         self.root.geometry("800x600")
         self.root.configure(bg="#202020")
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.running = True
 
         # Main Layout
         self.main_frame = tk.Frame(self.root, bg="#202020")
@@ -36,7 +38,7 @@ class GUI:
         # Right Side: Debug Pane
         self.right_frame = tk.Frame(self.main_frame, bg="#303030", width=300)
         self.right_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
-        self.right_frame.pack_propagate(False)
+        # self.right_frame.pack_propagate(False)
 
         self.create_debug_pane()
 
@@ -65,7 +67,7 @@ class GUI:
         self.btn_start = self.create_visual_button(self.ss_frame, "START", 1, 0, width=8, height=1, color="#505050")
 
     def create_visual_button(self, parent, text, col, row, width=4, height=2, color="#303030"):
-        btn = tk.Label(parent, text=text, width=width, height=height, bg=color, fg="white", font=("Arial", 8, "bold"), relief="raised")
+        btn = tk.Button(parent, text=text, width=width, height=height, bg=color, fg="white", font=("Arial", 8, "bold"), relief="raised")
         btn.grid(column=col, row=row, padx=5, pady=5)
         return btn
 
@@ -118,7 +120,13 @@ class GUI:
     def step_cpu(self):
         self.step_requested = True
 
+    def on_closing(self):
+        self.running = False
+        self.root.destroy()
+
     def update(self):
+        if not self.running:
+            return
         # Update Registers
         if self.cpu:
             self.reg_labels["A"].config(text=f"{self.cpu.CoreReg.A:02X}")
@@ -133,7 +141,7 @@ class GUI:
             self.reg_labels["PC"].config(text=f"{self.cpu.CoreWords.PC:04X}")
 
             # Update Memory View (around PC)
-            pc = self.cpu.CoreWords.PC
+            pc = int(self.cpu.CoreWords.PC)
             start_addr = max(0, pc - 4)
             end_addr = min(0xFFFF, pc + 4)
             

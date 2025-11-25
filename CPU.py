@@ -41,6 +41,25 @@ class CPU(SingletonBase):
         self.init_opCodes()
 
         self.cycles = 0
+        
+        self.reset()
+
+    def reset(self):
+        # Registers (Post-Boot ROM values)
+        self.CoreReg.A = 0x01
+        self.Flags.F = 0xB0
+        self.CoreWords.BC = 0x0013
+        self.CoreWords.DE = 0x00D8
+        self.CoreWords.HL = 0x014D
+        self.CoreWords.SP = 0xFFFE
+        self.CoreWords.PC = 0x0100
+
+        # State
+        self.cycles = 0
+        self.Halted = False
+        self.Stopped = False
+        self.scheduleIMEEnabled = False
+        self.InterruptMask.IME = 0
 
     def step(self):
         # Handle Stopped State first

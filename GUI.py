@@ -99,13 +99,16 @@ class GUI:
         self.control_frame = tk.Frame(self.right_frame, bg="#303030")
         self.control_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=10, padx=10)
 
-        self.btn_pause = tk.Button(self.control_frame, text="Pause", command=self.toggle_pause, bg="#505050", fg="white", width=8)
+        self.btn_pause = tk.Button(self.control_frame, text="Resume", command=self.toggle_pause, bg="#008000", fg="white", width=8)
         self.btn_pause.pack(side=tk.LEFT, padx=5)
 
-        self.btn_step = tk.Button(self.control_frame, text="Step", command=self.step_cpu, bg="#505050", fg="white", width=8, state="disabled")
+        self.btn_step = tk.Button(self.control_frame, text="Step", command=self.step_cpu, bg="#505050", fg="white", width=8, state="normal")
         self.btn_step.pack(side=tk.RIGHT, padx=5)
 
-        self.paused = False
+        self.btn_reset = tk.Button(self.control_frame, text="Reset", command=self.reset_cpu, bg="#8b0000", fg="white", width=8)
+        self.btn_reset.pack(side=tk.RIGHT, padx=5)
+
+        self.paused = True
         self.step_requested = False
 
     def toggle_pause(self):
@@ -119,6 +122,14 @@ class GUI:
 
     def step_cpu(self):
         self.step_requested = True
+
+    def reset_cpu(self):
+        self.cpu.reset()
+        self.bus.reset()
+        self.paused = True
+        self.btn_pause.config(text="Resume", bg="#008000")
+        self.btn_step.config(state="normal")
+        self.update()
 
     def on_closing(self):
         self.running = False

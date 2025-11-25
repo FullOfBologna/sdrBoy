@@ -32,6 +32,16 @@ class Bus(SingletonBase):
         self.ppu = None
 
         self._initialized = True
+        
+    def reset(self):
+        self.wram.fill(0)
+        self.hram.fill(0)
+        self.ext_ram.fill(0)
+        self.io_regs.fill(0)
+        self.ie_reg = Byte(0)
+        
+        # Note: We don't clear ROM or VRAM/OAM here as VRAM/OAM belongs to PPU
+        # and ROM should persist. PPU reset should be handled if needed.
 
 
     def loadROM(self, rom_bytes: bytes):
@@ -119,6 +129,11 @@ class Bus(SingletonBase):
         elif 0xFF00 <= addr <= 0xFF7F:
             # Other IO Registers
             self.io_regs[addr - 0xFF00] = value
+            
+            # Serial Port Implementation
+            if addr == 0xFF02 and value == 0x81:
+                char = chr(self.io_regs[0xFF01 - 0xFF00])
+                print(char, end="", flush=True)
         elif 0xFF80 <= addr <= 0xFFFE:
             # HRAM Area
             self.hram[addr - 0xFF80] = value

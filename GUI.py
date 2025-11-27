@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
+from Disassembler import Disassembler
+from Registers import Word
 
 class GUI:
     def __init__(self, cpu, bus):
@@ -41,6 +43,9 @@ class GUI:
         # self.right_frame.pack_propagate(False)
 
         self.create_debug_pane()
+        self.create_memory_view()
+        
+        self.disassembler = Disassembler(cpu, bus)
 
     def create_buttons(self):
         # D-Pad
@@ -76,7 +81,7 @@ class GUI:
         tk.Label(self.right_frame, text="Registers", bg="#303030", fg="#00ff00", font=("Courier", 12, "bold")).pack(pady=(10, 5))
         
         self.reg_labels = {}
-        regs = ["A", "F", "B", "C", "D", "E", "H", "L", "SP", "PC"]
+        regs = ["AF", "BC", "DE", "HL", "SP", "PC"]
         
         self.reg_frame = tk.Frame(self.right_frame, bg="#303030")
         self.reg_frame.pack(fill=tk.X, padx=10)
@@ -84,13 +89,32 @@ class GUI:
         for i, reg in enumerate(regs):
             frame = tk.Frame(self.reg_frame, bg="#303030")
             frame.pack(fill=tk.X, pady=2)
-            tk.Label(frame, text=f"{reg}:", bg="#303030", fg="white", font=("Courier", 10), width=3, anchor="w").pack(side=tk.LEFT)
-            val_label = tk.Label(frame, text="00", bg="#303030", fg="#00ff00", font=("Courier", 10))
+            tk.Label(frame, text=f"{reg}:", bg="#303030", fg="white", font=("Courier", 10), width=4, anchor="w").pack(side=tk.LEFT)
+            val_label = tk.Label(frame, text="0000", bg="#303030", fg="#00ff00", font=("Courier", 10))
             val_label.pack(side=tk.RIGHT)
             self.reg_labels[reg] = val_label
 
+        # Flags
+        self.flag_frame = tk.Frame(self.right_frame, bg="#303030")
+        self.flag_frame.pack(fill=tk.X, padx=10, pady=(10, 0))
+        
+        self.flag_vars = {}
+        flags = ["Z", "N", "H", "C"]
+        
+        for flag in flags:
+            frame = tk.Frame(self.flag_frame, bg="#303030")
+            frame.pack(fill=tk.X, pady=1)
+            
+            var = tk.BooleanVar()
+            self.flag_vars[flag] = var
+            
+            # Custom checkbox style using Label and Button or Checkbutton with custom image/style is hard in pure tkinter without images
+            # Using standard Checkbutton but trying to style it to look decent
+            chk = tk.Checkbutton(frame, text=flag, variable=var, bg="#303030", fg="white", selectcolor="#f0ad4e", activebackground="#303030", activeforeground="white", font=("Courier", 10, "bold"), state="disabled", disabledforeground="white")
+            chk.pack(side=tk.LEFT)
+
         # Memory View
-        tk.Label(self.right_frame, text="Memory", bg="#303030", fg="#00ff00", font=("Courier", 12, "bold")).pack(pady=(20, 5))
+        tk.Label(self.right_frame, text="Disassembly", bg="#303030", fg="#00ff00", font=("Courier", 12, "bold")).pack(pady=(20, 5))
         
         self.mem_text = tk.Text(self.right_frame, height=15, width=30, bg="black", fg="#00ff00", font=("Courier", 9), state="disabled")
         self.mem_text.pack(padx=10, pady=5)
@@ -140,32 +164,45 @@ class GUI:
             return
         # Update Registers
         if self.cpu:
-            self.reg_labels["A"].config(text=f"{self.cpu.CoreReg.A:02X}")
-            self.reg_labels["F"].config(text=f"{self.cpu.Flags.F:02X}")
-            self.reg_labels["B"].config(text=f"{self.cpu.CoreReg.B:02X}")
-            self.reg_labels["C"].config(text=f"{self.cpu.CoreReg.C:02X}")
-            self.reg_labels["D"].config(text=f"{self.cpu.CoreReg.D:02X}")
-            self.reg_labels["E"].config(text=f"{self.cpu.CoreReg.E:02X}")
-            self.reg_labels["H"].config(text=f"{self.cpu.CoreReg.H:02X}")
-            self.reg_labels["L"].config(text=f"{self.cpu.CoreReg.L:02X}")
+            af = (self.cpu.CoreReg.A.astype(Word) << 8) | self.cpu.Flags.F
+            self.reg_labels["AF"].config(text=f"{af:04X}")
+            self.reg_labels["BC"].config(text=f"{self.cpu.CoreWords.BC:04X}")
+            self.reg_labels["DE"].config(text=f"{self.cpu.CoreWords.DE:04X}")
+            self.reg_labels["HL"].config(text=f"{self.cpu.CoreWords.HL:04X}")
             self.reg_labels["SP"].config(text=f"{self.cpu.CoreWords.SP:04X}")
             self.reg_labels["PC"].config(text=f"{self.cpu.CoreWords.PC:04X}")
 
-            # Update Memory View (around PC)
+            # Update Flags
+            f = self.cpu.Flags.F
+            self.flag_vars["Z"].set(bool(f & 0x80))
+            self.flag_vars["N"].set(bool(f & 0x40))
+            self.flag_vars["H"].set(bool(f & 0x20))
+            self.flag_vars["C"].set(bool(f & 0x10))
+
+            # Update Disassembly View
             pc = int(self.cpu.CoreWords.PC)
-            start_addr = max(0, pc - 4)
-            end_addr = min(0xFFFF, pc + 4)
+            # We want to show some lines before PC if possible, but disassembly is variable length.
+            # Simple approach: Show from PC onwards.
+            # Better approach: Disassemble a block starting from PC.
             
-            mem_str = ""
-            for addr in range(start_addr, end_addr + 1):
-                val = self.bus.readByte(addr)
-                prefix = "-> " if addr == pc else "   "
-                mem_str += f"{prefix}{addr:04X}: {val:02X}\n"
+            lines = self.disassembler.disassemble(pc, 15)
+            
+            dis_str = ""
+            for line in lines:
+                dis_str += f"{line}\n"
             
             self.mem_text.config(state="normal")
             self.mem_text.delete(1.0, tk.END)
-            self.mem_text.insert(tk.END, mem_str)
+            self.mem_text.insert(tk.END, dis_str)
+            
+            # Highlight the first line (current PC)
+            self.mem_text.tag_add("current", "1.0", "1.end")
+            self.mem_text.tag_config("current", background="#404040", foreground="#ffffff")
+            
             self.mem_text.config(state="disabled")
+
+            # Update Memory View
+            self.update_memory_view()
 
         self.root.update_idletasks()
         self.root.update()
@@ -173,6 +210,89 @@ class GUI:
     def handle_input(self):
         pass
 
-    def animate_button(self, button_name, pressed):
-        # Change relief or color based on pressed state
-        pass
+    def create_memory_view(self):
+        tk.Label(self.right_frame, text="Memory Viewer", bg="#303030", fg="#00ff00", font=("Courier", 12, "bold")).pack(pady=(20, 5))
+        
+        # Address Input Frame
+        input_frame = tk.Frame(self.right_frame, bg="#303030")
+        input_frame.pack(fill=tk.X, padx=10)
+        
+        tk.Label(input_frame, text="Addr:", bg="#303030", fg="white", font=("Courier", 10)).pack(side=tk.LEFT)
+        self.mem_addr_entry = tk.Entry(input_frame, width=6, bg="#505050", fg="white", font=("Courier", 10))
+        self.mem_addr_entry.pack(side=tk.LEFT, padx=5)
+        self.mem_addr_entry.insert(0, "C000")
+        
+        btn_go = tk.Button(input_frame, text="Go", command=self.refresh_memory_view, bg="#505050", fg="white", font=("Arial", 8), width=3)
+        btn_go.pack(side=tk.LEFT)
+
+        # Quick Jump Buttons
+        jump_frame = tk.Frame(self.right_frame, bg="#303030")
+        jump_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        tk.Button(jump_frame, text="WRAM", command=lambda: self.set_mem_addr("C000"), bg="#404040", fg="white", font=("Arial", 7), width=5).pack(side=tk.LEFT, padx=2)
+        tk.Button(jump_frame, text="ECHO", command=lambda: self.set_mem_addr("E000"), bg="#404040", fg="white", font=("Arial", 7), width=5).pack(side=tk.LEFT, padx=2)
+        tk.Button(jump_frame, text="HRAM", command=lambda: self.set_mem_addr("FF80"), bg="#404040", fg="white", font=("Arial", 7), width=5).pack(side=tk.LEFT, padx=2)
+
+        # Hex Dump View
+        self.hex_text = tk.Text(self.right_frame, height=8, width=30, bg="black", fg="#00ff00", font=("Courier", 9), state="disabled")
+        self.hex_text.pack(padx=10, pady=5)
+        
+        self.current_mem_addr = 0xC000
+
+    def set_mem_addr(self, addr_str):
+        self.mem_addr_entry.delete(0, tk.END)
+        self.mem_addr_entry.insert(0, addr_str)
+        self.refresh_memory_view()
+
+    def refresh_memory_view(self):
+        try:
+            addr_str = self.mem_addr_entry.get()
+            self.current_mem_addr = int(addr_str, 16)
+        except ValueError:
+            pass
+        self.update_memory_view()
+
+    def update_memory_view(self):
+        if not self.cpu:
+            return
+            
+        start_addr = self.current_mem_addr
+        lines = []
+        
+        # Display 8 lines of 8 bytes
+        for i in range(8):
+            row_addr = start_addr + (i * 8)
+            if row_addr > 0xFFFF:
+                break
+                
+            hex_bytes = []
+            ascii_chars = ""
+            
+            for j in range(8):
+                addr = row_addr + j
+                if addr > 0xFFFF:
+                    break
+                
+                try:
+                    val = self.bus.readByte(addr)
+                    hex_bytes.append(f"{val:02X}")
+                    
+                    # ASCII representation (replace non-printable with .)
+                    if 32 <= val <= 126:
+                        ascii_chars += chr(val)
+                    else:
+                        ascii_chars += "."
+                except Exception:
+                    hex_bytes.append("??")
+                    ascii_chars += "."
+            
+            hex_str = " ".join(hex_bytes)
+            lines.append(f"{row_addr:04X}  {hex_str:<23}  {ascii_chars}")
+            
+        view_str = "\n".join(lines)
+        
+        self.hex_text.config(state="normal")
+        self.hex_text.delete(1.0, tk.END)
+        self.hex_text.insert(tk.END, view_str)
+        self.hex_text.config(state="disabled")
+

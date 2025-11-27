@@ -207,16 +207,17 @@ class TestOpCodes:
 
     jump_test_cases = [
         # mnemonic, initial_flags, offset, expected_pc, cycles, id
-        pytest.param("_jr_r8", "----", 5, 0x0105, 12, id="JR +5"),
-        pytest.param("_jr_r8", "----", -5, 0x00FB, 12, id="JR -5"),
-        pytest.param("_jr_nz_r8", "0---", 5, 0x0105, 12, id="JR NZ, Z=0, +5"),
-        pytest.param("_jr_nz_r8", "1---", 5, 0x0100, 8, id="JR NZ, Z=1, +5"),
-        pytest.param("_jr_z_r8", "1---", 5, 0x0105, 12, id="JR Z, Z=1, +5"),
-        pytest.param("_jr_z_r8", "0---", 5, 0x0100, 8, id="JR Z, Z=0, +5"),
-        pytest.param("_jr_nc_r8", "---0", 5, 0x0105, 12, id="JR NC, C=0, +5"),
-        pytest.param("_jr_nc_r8", "---1", 5, 0x0100, 8, id="JR NC, C=1, +5"),
-        pytest.param("_jr_c_r8", "---1", 5, 0x0105, 12, id="JR C, C=1, +5"),
-        pytest.param("_jr_c_r8", "---0", 5, 0x0100, 8, id="JR C, C=0, +5"),
+        # Base PC = 0xC000
+        pytest.param("_jr_r8", "----", 5, 0xC007, 12, id="JR +5"),
+        pytest.param("_jr_r8", "----", -5, 0xBFFD, 12, id="JR -5"),
+        pytest.param("_jr_nz_r8", "0---", 5, 0xC007, 12, id="JR NZ, Z=0, +5"),
+        pytest.param("_jr_nz_r8", "1---", 5, 0xC000, 8, id="JR NZ, Z=1, +5"),
+        pytest.param("_jr_z_r8", "1---", 5, 0xC007, 12, id="JR Z, Z=1, +5"),
+        pytest.param("_jr_z_r8", "0---", 5, 0xC000, 8, id="JR Z, Z=0, +5"),
+        pytest.param("_jr_nc_r8", "---0", 5, 0xC007, 12, id="JR NC, C=0, +5"),
+        pytest.param("_jr_nc_r8", "---1", 5, 0xC000, 8, id="JR NC, C=1, +5"),
+        pytest.param("_jr_c_r8", "---1", 5, 0xC007, 12, id="JR C, C=1, +5"),
+        pytest.param("_jr_c_r8", "---0", 5, 0xC000, 8, id="JR C, C=0, +5"),
     ]
 
     ld_r8_r8_test_cases = [
@@ -1262,7 +1263,7 @@ class TestOpCodes:
     def test_jump_routines(self, cpu, mnemonic, initial_flags, offset, expected_pc, cycles):
         """Tests relative jump routines"""
         # Arrange
-        cpu.CoreWords.PC = 0x0100  # Initial PC value
+        cpu.CoreWords.PC = 0xC000  # Initial PC value (WRAM)
 
         # Set initial flag values based on the initial_flags string
         if initial_flags[0] != "-":
@@ -1275,15 +1276,24 @@ class TestOpCodes:
             cpu.Flags.c = int(initial_flags[3])
 
         instruction_method = getattr(cpu, mnemonic)
-        operand_address = np.int8(offset)
+        
+        # Write the offset to memory at PC + 1
+        operand_address = cpu.CoreWords.PC + 1
+        cpu.Bus.writeByte(operand_address, np.int8(offset))
 
         # Act
         pc_override, cycle_override = instruction_method(operand_address)
 
         # Assert
-        assert cpu.CoreWords.PC == expected_pc, f"PC expected {expected_pc:04X}, got {cpu.CoreWords.PC:04X}"
+        if pc_override is not None:
+            # Jump taken
+            assert pc_override == expected_pc, f"PC override expected {expected_pc:04X}, got {pc_override:04X}"
+        else:
+            # Jump not taken
+            # PC should not have been modified by the method itself
+            assert cpu.CoreWords.PC == 0xC000, "PC should not be modified if jump not taken"
+            
         assert cycle_override == cycles, f"Cycles expected {cycles}, got {cycle_override}"
-        assert pc_override is None, "PC override should be None"
 
     @pytest.mark.parametrize("dest_reg, src_reg, initial_src_value, expected_dest_value", ld_r8_r8_test_cases)
     def test_ld_r8_r8(self, cpu, dest_reg, src_reg, initial_src_value, expected_dest_value):

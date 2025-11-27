@@ -46,11 +46,11 @@ class CPU(SingletonBase):
 
     def reset(self):
         # Registers (Post-Boot ROM values)
-        self.CoreReg.A = 0x01
-        self.Flags.F = 0xB0
-        self.CoreWords.BC = 0x0013
-        self.CoreWords.DE = 0x00D8
-        self.CoreWords.HL = 0x014D
+        self.CoreReg.A = 0x11
+        self.Flags.F = 0x80
+        self.CoreWords.BC = 0x0000
+        self.CoreWords.DE = 0xFF56
+        self.CoreWords.HL = 0x000D
         self.CoreWords.SP = 0xFFFE
         self.CoreWords.PC = 0x0100
 
@@ -795,7 +795,7 @@ class CPU(SingletonBase):
         return None, None
     # Increment 16 bit register by 1
     def _inc_r16(self,register):
-        return (register + 1) & 0xFFFF
+        return (int(register) + 1) & 0xFFFF
 
     def _inc_bc(self, operandAddr):
         self.CoreWords.BC = self._inc_r16(self.CoreWords.BC)
@@ -813,7 +813,7 @@ class CPU(SingletonBase):
     # Increment 8 bit register by 1
     def _inc_reg8(self,register):
         original = register
-        register = (register + 1) & 0xFF
+        register = (Word(register) + 1) & 0xFF
 
         self.Flags.z = 1 if register == 0 else 0
         self.Flags.n = 0
@@ -846,7 +846,7 @@ class CPU(SingletonBase):
      # Helper: Decrement 8 bit value, set flags, return result
     def _dec_reg8(self, value):
         original = value
-        result = (value - 1) & 0xFF # Calculate result with wrap-around
+        result = (int(value) - 1) & 0xFF # Calculate result with wrap-around
 
         # Set flags
         self.Flags.n = 1 # N is always set for DEC
@@ -887,7 +887,7 @@ class CPU(SingletonBase):
         return None, None
     
     def _dec_r16(self,register):
-        return (register - 1) & 0xFFFF
+        return (int(register) - 1) & 0xFFFF
 
     def _dec_bc(self, operandAddr):
         self.CoreWords.BC = self._dec_r16(self.CoreWords.BC)
@@ -931,7 +931,7 @@ class CPU(SingletonBase):
     def _inc_mhl(self,operandAddr):
         # Increment Value stored in HL Location
         original = self.Bus.readByte(self.CoreWords.HL)
-        result = (original + 1) & 0xFF
+        result = (Word(original) + 1) & 0xFF
 
         self.Bus.writeByte(self.CoreWords.HL, result)
 
@@ -943,7 +943,7 @@ class CPU(SingletonBase):
     def _dec_mhl(self,operandAddr):
         # Decrement Value stored in HL Location
         original = self.Bus.readByte(self.CoreWords.HL)
-        result = (original - 1) & 0xFF
+        result = (int(original) - 1) & 0xFF
 
         self.Bus.writeByte(self.CoreWords.HL, result)
 
@@ -955,7 +955,7 @@ class CPU(SingletonBase):
     # Adds r16 register to the value stored in hl
     def _add_hl_r16(self, register):
         original = self.CoreWords.HL
-        self.CoreWords.HL = (original + register) & 0xFFFF
+        self.CoreWords.HL = (int(original) + int(register)) & 0xFFFF
 
         # Half-carry: Carry from bit 11 to 12
         self.Flags.h = 1 if ((original ^ register ^ self.CoreWords.HL) & 0x1000) else 0
@@ -1115,52 +1115,47 @@ class CPU(SingletonBase):
     # jump related to provided 8 bit signed value
     #   PC <-- PC + signed 8-bit value
     def _jr_r8(self,operandAddr):
-        operandAddr = np.int8(operandAddr)
-        self.CoreWords.PC += operandAddr
-        return None, 12
+        offset = np.int8(self.Bus.readByte(operandAddr))
+        target_pc = (self.CoreWords.PC + 2 + offset) & 0xFFFF
+        return target_pc, 12
 
-    # Jump relative to procided 8 bit signed value if the Zero Flag is not set
+    # Jump relative to provided 8 bit signed value if the Zero Flag is not set
     #   PC <-- PC + signed 8-bit value
 
     def _jr_nz_r8(self,operandAddr):
-        operandAddr = np.int8(operandAddr)
-        
         if self.Flags.z == 0:
-            self.CoreWords.PC += operandAddr
+            offset = np.int8(self.Bus.readByte(operandAddr))
+            target_pc = (self.CoreWords.PC + 2 + offset) & 0xFFFF
+            return target_pc, 12
         else:
-            return None,8 # Cycle Override
-        return None, 12
+            return None, 8 # Cycle Override
 
     # Jump relative to provided 8 bit signed value if the Carry Flag is not set
     def _jr_nc_r8(self,operandAddr):
-
-        operandAddr = np.int8(operandAddr)
-
         if self.Flags.c == 0:
-            self.CoreWords.PC += operandAddr
+            offset = np.int8(self.Bus.readByte(operandAddr))
+            target_pc = (self.CoreWords.PC + 2 + offset) & 0xFFFF
+            return target_pc, 12
         else: 
-            return None,8
-        return None, 12
+            return None, 8
 
     # Jump relative to provided 8 bit signed value if the Zero Flag is set
     def _jr_z_r8(self,operandAddr):
-        operandAddr = np.int8(operandAddr)
-
         if self.Flags.z == 1:
-            self.CoreWords.PC += operandAddr
+            offset = np.int8(self.Bus.readByte(operandAddr))
+            target_pc = (self.CoreWords.PC + 2 + offset) & 0xFFFF
+            return target_pc, 12
         else:
-            return None,8
-        return None, 12
+            return None, 8
 
     # Jump relative to provided 8 bit signed value if the Carry Flag is set
     def _jr_c_r8(self,operandAddr):
-        operandAddr = np.int8(operandAddr)
-
         if self.Flags.c == 1:
-            self.CoreWords.PC += operandAddr
+            offset = np.int8(self.Bus.readByte(operandAddr))
+            target_pc = (self.CoreWords.PC + 2 + offset) & 0xFFFF
+            return target_pc, 12
         else:
-            return None,8
-        return None, 12
+            return None, 8
 
 
     # Decimal Adjust Accumulator
@@ -1455,7 +1450,7 @@ class CPU(SingletonBase):
     def _sub_a_r8(self,register):
         # Subtract the value of the provided 8 bit register from the accumulator
         original = self.CoreReg.A
-        result = (self.CoreReg.A - register) & 0xFF
+        result = (int(self.CoreReg.A) - int(register)) & 0xFF
 
         # Set flags
         self.Flags.z = 1 if result == 0 else 0
@@ -1496,13 +1491,13 @@ class CPU(SingletonBase):
     def _sbc_a_r8(self,register):
         # Subtract the value of the provided 8 bit register from the accumulator with carry
         original = self.CoreReg.A
-        result = (self.CoreReg.A - register - self.Flags.c) & 0xFF
+        result = (int(self.CoreReg.A) - int(register) - int(self.Flags.c)) & 0xFF
 
         # Set flags
         self.Flags.z = 1 if result == 0 else 0
         self.Flags.n = 1
-        self.Flags.h = 1 if (original & 0x0F) < (register & 0x0F) else 0
-        self.Flags.c = 1 if original < register else 0
+        self.Flags.h = 1 if (int(original & 0x0F) - int(register & 0x0F) - int(self.Flags.c)) < 0 else 0
+        self.Flags.c = 1 if (int(original) - int(register) - int(self.Flags.c)) < 0 else 0
 
         return result
     
@@ -1660,7 +1655,7 @@ class CPU(SingletonBase):
     def _cp_a_r8(self,register):
         # Compare the value of the provided 8 bit register with the accumulator
         original = self.CoreReg.A
-        result = (self.CoreReg.A - register) & 0xFF
+        result = (int(self.CoreReg.A) - int(register)) & 0xFF
 
         # Set flags
         self.Flags.z = 1 if result == 0 else 0
@@ -1964,13 +1959,13 @@ class CPU(SingletonBase):
     #======================================================================
     def _ldh_ma8_a(self, operandAddr):
         # LDH (a8), A - operandAddr is the immediate a8 value
-        address = 0xFF00 + operandAddr
+        address = 0xFF00 + Word(operandAddr)
         self.Bus.writeByte(address, self.CoreReg.A)
         return None, None
 
     def _ldh_a_ma8(self, operandAddr):
         # LDH A, (a8) - operandAddr is the immediate a8 value
-        address = 0xFF00 + operandAddr
+        address = 0xFF00 + Word(operandAddr)
         self.CoreReg.A = self.Bus.readByte(address)
         return None, None
 

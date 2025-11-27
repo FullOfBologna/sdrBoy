@@ -61,6 +61,8 @@ def main():
     except KeyboardInterrupt:
         pass
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"An error occurred: {e}")
 
     print("======================\nShutting down Game Boy\n======================")
